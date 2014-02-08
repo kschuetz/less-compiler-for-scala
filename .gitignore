@@ -1,0 +1,23 @@
+*.class
+*.log
+
+# sbt specific
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# IDE specific
+.scala_dependencies
+*.iws
+*.iml
+*.ipr
+.idea/
+.ensime
+.ensime_port
+.classpath
+.project
+.settings
+.cache
