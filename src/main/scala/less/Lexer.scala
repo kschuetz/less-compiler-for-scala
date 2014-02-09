@@ -11,7 +11,7 @@ object LessLexer {
 
     val START, NUMBER, NUMDOT, FLOAT, AT, AT_IDENT, SLASH,
         LINECOMMENT, BLOCKCOMMENT, BLOCKCOMMENTSTAR,
-        STRING_LIT, LIT_AT, LIT_AT_BRACE, LIT_INTERP_IDENT, LIT_ESC = Value
+        STRING_LIT, LIT_ESC, LIT_AT, LIT_AT_BRACE, LIT_INTERP_IDENT, LIT_INTERP_IDENT_END  = Value
   }
 
 }
@@ -61,9 +61,9 @@ class LessLexer extends Lexer {
       var qChar: Char = '\0';
 
 
-
       val capture = new StringBuilder
 
+      val tokenBuffer = new collection.mutable.ArrayBuffer[LexerToken]
 
 
       def accept(token: Token, line: Int, col: Int): Unit = {
@@ -99,6 +99,19 @@ class LessLexer extends Lexer {
       def unterminatedStringLiteralError(line: Int, col: Int): Unit =
         error("Unterminated string literal", line, col)
 
+      def addStringLiteralChunks(): Unit = {
+        import tokens._
+
+        val s = capture.result()
+        if(subItemOffset > 0) {
+          tokenBuffer += lexerToken(StringLiteralChunk(s.take(subItemOffset)), startLine, startCol)
+        }
+
+        val ident = s.substring(subItemOffset + 2, s.length - 1)
+        tokenBuffer += lexerToken(InterpolatedIdentifier(ident), startLine, startCol + subItemOffset)
+
+      }
+
       def completeState(state: StateType, endOfInput: Boolean = false) {
         import tokens._
 
@@ -132,13 +145,23 @@ class LessLexer extends Lexer {
 
           case STRING_LIT => {
             val s = capture.result
-            accept(StringLiteralChunk(s), startLine, startCol)
+            val t = StringLiteralChunk(s)
+            if(tokenBuffer.isEmpty) {
+              accept(t, startLine, startCol)
+            } else {
+              tokenBuffer += lexerToken(t, startLine, startCol)
+              acceptMany(tokenBuffer.toVector)
+            }
           }
           case LIT_ESC => unterminatedStringLiteralError(reader.line, reader. col)
           case LIT_AT => unterminatedStringLiteralError(reader.line, reader. col)
           case LIT_AT_BRACE => unterminatedStringLiteralError(reader.line, reader. col)
-          case LIT_INTERP_IDENT => unterminatedStringLiteralError(reader.line, reader. col)
+          case LIT_INTERP_IDENT if endOfInput => unterminatedStringLiteralError(reader.line, reader. col)
+          case LIT_INTERP_IDENT => {
+            //val s = capture.result
+            //if
 
+          }
         }
       }
 
@@ -169,6 +192,7 @@ class LessLexer extends Lexer {
                 markBegin(line, col)
                 itemCount = 0
                 capture.clear()
+                tokenBuffer.clear()
                 state = STRING_LIT
               }
               case n if n.isDigit => {
@@ -317,11 +341,24 @@ class LessLexer extends Lexer {
                 case LIT_AT => if(c == '{') { state = LIT_AT_BRACE } else { state = STRING_LIT }
                 case LIT_AT_BRACE => if(isValidIdentStartChar(c)) { state = LIT_INTERP_IDENT } else { state = STRING_LIT }
                 case LIT_INTERP_IDENT => {
-                  if(c == '}') completeState(LIT_INTERP_IDENT)
+                  if(c == '}') { state = LIT_INTERP_IDENT_END }
                   else if (!isValidIdentChar(c)) { state = STRING_LIT }
                 }
               }
             }
+
+          } else if (state == LIT_INTERP_IDENT_END) {
+            if(c == qChar) {
+              completeState(state)
+            } else {
+              addStringLiteralChunks()
+              reader.unget(pc)
+              markBegin(line, col)
+              itemCount = 0
+              capture.clear()
+              state = STRING_LIT
+            }
+
           }
 
         } getOrElse {
