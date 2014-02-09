@@ -91,12 +91,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       sc.map { x => (x.line, x.col) } getOrElse { (reader.line, reader.col) }
     }
 
-    def unterminatedBlockCommentError(line: Int, col: Int): Unit =
-      error("Unterminated block comment", line, col)
+    def unterminatedBlockCommentError(sourceChar: Option[SourceChar]): Unit =
+      error("Unterminated block comment", sourceChar)
 
 
-    def unterminatedStringLiteralError(line: Int, col: Int): Unit =
-      error("Unterminated string literal", line, col)
+    def unterminatedStringLiteralError(sourceChar: Option[SourceChar]): Unit =
+      error("Unterminated string literal", sourceChar)
 
     def markBegin(line: Int, col: Int) = {
       startLine = line
@@ -108,6 +108,20 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       else { capture.clear() }
     }
 
+    def addStringLiteralChunks(): Unit = {
+      import tokens._
+
+      val s = capture.result()
+      if(subItemOffset > 0) {
+        tokenBuffer += lexerToken(StringLiteralChunk(s.take(subItemOffset)), startLine, startCol)
+      }
+
+      val ident = s.substring(subItemOffset + 2, s.length - 1)
+      tokenBuffer += lexerToken(InterpolatedIdentifier(ident), startLine, startCol + subItemOffset)
+
+    }
+
+    // ***** handlers *****
 
     def at1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
@@ -153,7 +167,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         if(sc.c == '*') handler = blockCommentStar
         else capture.append(sc.c)
       } getOrElse {
-        unterminatedBlockCommentError(reader.line, reader.col)
+        unterminatedBlockCommentError(input)
       }
     }
 
@@ -168,7 +182,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           handler = blockComment
         }
       } getOrElse {
-        unterminatedBlockCommentError(reader.line, reader.col)
+        unterminatedBlockCommentError(input)
       }
     }
 
@@ -222,7 +236,30 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
     def stringLiteral(input: Option[SourceChar]): Unit = {
+      var ok = false
+      input.foreach { sc =>
+        if(sc.c == qChar) {
+          val s = capture.result
+          val t = StringLiteralChunk(s)
+          if(tokenBuffer.isEmpty) {
+            accept(t, startLine, startCol)
+          } else {
+            tokenBuffer += lexerToken(t, startLine, startCol)
+            acceptMany(tokenBuffer.toVector)
+          }
 
+          ok = true
+        } else if (!isLineBreak(sc.c)) {
+          capture.append(sc.c)
+          sc.c match {
+            case '@' => { subItemOffset = itemCount; handler = stringLiteralAt }
+            case '\\' => { handler = stringLiteralEsc }
+          }
+          itemCount += 1
+          ok = true
+        }
+      }
+      if(!ok) unterminatedStringLiteralError(input)
     }
 
     def stringLiteralEsc(input: Option[SourceChar]): Unit = {
@@ -230,15 +267,51 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
     def stringLiteralAt(input: Option[SourceChar]): Unit = {
-
+      input.map { sc =>
+        if(sc.c == '{') { capture.append(sc.c); itemCount += 1; handler = stringLiteralAtBrace }
+        else { reader.unget(sc); handler = stringLiteral }
+      } getOrElse {
+        unterminatedStringLiteralError(None)
+      }
     }
 
     def stringLiteralAtBrace(input: Option[SourceChar]): Unit = {
-
+      input.map { sc =>
+        if(isValidIdentStartChar(sc.c)) { capture.append(sc.c); itemCount += 1; handler = stringLiteralInterpolate }
+        else { reader.unget(sc); handler = stringLiteral }
+      } getOrElse {
+        unterminatedStringLiteralError(None)
+      }
     }
 
     def stringLiteralInterpolate(input: Option[SourceChar]): Unit = {
+      input.map { sc =>
+        if(sc.c == '}') { handler = stringLiteralInterpolateEnd }
+        if(isValidIdentChar(sc.c)) { capture.append(sc.c); itemCount += 1 }
+        else { reader.unget(sc); handler = stringLiteral }
+      } getOrElse {
+        unterminatedStringLiteralError(None)
+      }
+    }
 
+    def stringLiteralInterpolateEnd(input: Option[SourceChar]): Unit = {
+      input.map { case sc @ SourceChar(c, line, col) =>
+        addStringLiteralChunks()
+        if(c == qChar) {
+          // the closing quote immediately succeeded to closing brace
+          acceptMany(tokenBuffer.toVector)
+
+        } else {
+          // there is more literal text to follow the closing brace
+          reader.unget(sc)
+          markBegin(line, col)
+          itemCount = 0
+          resetCapture()
+          handler = stringLiteral
+        }
+      } getOrElse {
+        unterminatedStringLiteralError(None)
+      }
     }
 
 
@@ -248,6 +321,9 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
           case '/' => { markBegin(line, col); handler = slash }
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
+          case ch if isStringLiteralDelimiter(ch) => {
+            qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); tokenBuffer.clear(); handler = stringLiteral
+          }
         }
       }
     }
