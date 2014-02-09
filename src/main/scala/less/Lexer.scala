@@ -149,6 +149,17 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       if(!ok) error(". must be followed by an identifier", startLine, startCol)
     }
 
+    def hash1(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) {
+          reader.unget(sc)
+          accept(Hash, startLine, startCol)
+        } else ok = false
+      }
+      if(!ok) error("# must be followed by an identifier", startLine, startCol)
+    }
+
     def atIdent(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
@@ -352,6 +363,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
           case '.' => { markBegin(line, col); handler = dot1 }
           case '/' => { markBegin(line, col); handler = slash }
+          case '#' => { markBegin(line, col); handler = hash1 }
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
             qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); resetTokenBuffer(); handler = stringLiteral
