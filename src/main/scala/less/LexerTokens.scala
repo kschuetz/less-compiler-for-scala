@@ -25,13 +25,14 @@ object tokens {
   case object Comma extends Token
   case object Dot extends Token
   case object Hash extends Token
+  case object At extends Token
   case object ImportSym extends Token
   case object PageSym extends Token
   case object MediaSym extends Token
   case object FontFaceSym extends Token
   case object CharsetSym extends Token
   case object KeyFramesSym extends Token
-  case class VarName(name: String) extends Token
+  case class Identifier(name: String) extends Token
   case class WholeNumber(value: BigInt) extends Token
   case class FloatNumber(value: Double) extends Token
   case class BlockComment(value: String) extends Token {

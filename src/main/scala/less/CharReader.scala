@@ -10,9 +10,9 @@ class CharReader(val source: Reader,
 
   import scala.collection.mutable.ArrayBuffer
 
-  var bufferSize = 64
+  val bufferSize = 64
   var bufferReadIndex = 0
-  var buffer = new ArrayBuffer[PosChar](bufferSize)
+  val buffer = new ArrayBuffer[PosChar](bufferSize)
   var marks: List[Int] = List.empty[Int]
 
   private def shiftBuffer(): Unit = {
@@ -48,7 +48,7 @@ class CharReader(val source: Reader,
   }
 
   def get: Option[PosChar] = {
-    if(bufferReadIndex <= buffer.length) {
+    if(bufferReadIndex < buffer.length) {
       val res = Some(buffer(bufferReadIndex))
       bufferReadIndex += 1
       res
@@ -93,6 +93,14 @@ class CharReader(val source: Reader,
           }
         }
       }
+    }
+  }
+
+  def unget(item: PosChar): Unit = {
+    if(bufferReadIndex > 0) {
+      bufferReadIndex -= 1
+    } else {
+      buffer.insert(0, item)
     }
   }
 
