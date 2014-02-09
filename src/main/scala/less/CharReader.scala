@@ -2,7 +2,6 @@ package com.kschuetz.less
 
 import java.io.Reader
 
-case class SourceChar(c: Char, line: Int, col: Int)
 
 class CharReader(val source: Reader,
                  var line: Int,
