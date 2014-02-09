@@ -393,6 +393,15 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         accept(Identifier(s), startLine, startCol)
       }
     }
+
+    def dash1(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(sc.c.isLetter) { more = true; resetCapture(); capture.append('-'); capture.append(sc.c); handler = identifier }
+        else reader.unget(sc)
+      }
+      if(!more) accept(Minus, startLine, startCol)
+    }
       
 
     def top(input: Option[SourceChar]): Unit = {
@@ -400,6 +409,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         c match {
           case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
+          case '-' => { markBegin(line, col); handler = dash1 }
           case '.' => { markBegin(line, col); handler = dot1 }
           case ';' => { accept(Semicolon, line, col) }
           case ':' => { markBegin(line, col); handler = colon1 }
