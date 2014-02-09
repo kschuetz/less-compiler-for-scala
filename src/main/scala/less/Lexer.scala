@@ -162,7 +162,7 @@ class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) 
     }
 
     while(!found) {
-      reader.get.map { case pc @ PosChar(c, line, col) =>
+      reader.get.map { case pc @ SourceChar(c, line, col) =>
         import tokens._
 
         if(state == START) {

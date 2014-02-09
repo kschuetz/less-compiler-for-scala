@@ -2,7 +2,7 @@ package com.kschuetz.less
 
 import java.io.Reader
 
-case class PosChar(c: Char, line: Int, col: Int)
+case class SourceChar(c: Char, line: Int, col: Int)
 
 class CharReader(val source: Reader,
                  var line: Int,
@@ -12,7 +12,7 @@ class CharReader(val source: Reader,
 
   val bufferSize = 64
   var bufferReadIndex = 0
-  val buffer = new ArrayBuffer[PosChar](bufferSize)
+  val buffer = new ArrayBuffer[SourceChar](bufferSize)
   var marks: List[Int] = List.empty[Int]
 
   private def shiftBuffer(): Unit = {
@@ -28,7 +28,7 @@ class CharReader(val source: Reader,
     }
   }
 
-  private def appendToBuffer(item: PosChar): Unit = {
+  private def appendToBuffer(item: SourceChar): Unit = {
     buffer += item
   }
 
@@ -47,7 +47,7 @@ class CharReader(val source: Reader,
     bufferReadIndex = marks.head
   }
 
-  def get: Option[PosChar] = {
+  def get: Option[SourceChar] = {
     if(bufferReadIndex < buffer.length) {
       val res = Some(buffer(bufferReadIndex))
       bufferReadIndex += 1
@@ -62,23 +62,23 @@ class CharReader(val source: Reader,
             val c2 = source.read
             if(c2 < 0) None
             else if (c2 == 10) {
-              val res = PosChar('\n', line, col)
+              val res = SourceChar('\n', line, col)
               if(marks.nonEmpty) appendToBuffer(res)
               line += 1
               col = 1
               Some(res)
             } else {
-              val res = PosChar('\n', line, col)
+              val res = SourceChar('\n', line, col)
               if(marks.nonEmpty) appendToBuffer(res)
               line += 1
               col = 1
-              appendToBuffer(PosChar(c2.toChar, line, col))
+              appendToBuffer(SourceChar(c2.toChar, line, col))
               Some(res)
             }
           }
 
           case '\n' => {
-            val res = PosChar('\n', line, col)
+            val res = SourceChar('\n', line, col)
             if(marks.nonEmpty) appendToBuffer(res)
             line += 1
             col += 1
@@ -86,7 +86,7 @@ class CharReader(val source: Reader,
           }
 
           case _ => {
-            val res = PosChar(if(c.isWhitespace) ' ' else c, line, col)
+            val res = SourceChar(if(c.isWhitespace) ' ' else c, line, col)
             if(marks.nonEmpty) appendToBuffer(res)
             col += 1
             Some(res)
@@ -96,7 +96,7 @@ class CharReader(val source: Reader,
     }
   }
 
-  def unget(item: PosChar): Unit = {
+  def unget(item: SourceChar): Unit = {
     if(bufferReadIndex > 0) {
       bufferReadIndex -= 1
     } else {
