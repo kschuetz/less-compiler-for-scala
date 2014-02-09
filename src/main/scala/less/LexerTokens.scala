@@ -15,7 +15,6 @@ object tokens {
   case object RBracket extends Token
   case object Eq extends Token
   case object Semicolon extends Token
-  case object Colon extends Token
   case object Slash extends Token
   case object Minus extends Token
   case object Plus extends Token
@@ -35,6 +34,8 @@ object tokens {
   case class InlineComment(value: String) extends Token {
     override def isComment: Boolean = true
   }
+
+  case class Colon(rightPadded: Boolean) extends Token
 
 
   case class StringLiteralChunk(value: String) extends Token
