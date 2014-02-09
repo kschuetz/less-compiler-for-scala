@@ -5,18 +5,6 @@ import java.io.Reader
 import scala.util.Try
 
 
-object LessLexerState {
-
-  object S_ extends Enumeration {
-    type S_ = Value
-
-    val START, NUMBER, NUMDOT, FLOAT, AT, AT_IDENT, SLASH,
-    LINECOMMENT, BLOCKCOMMENT, BLOCKCOMMENTSTAR,
-    STRING_LIT, LIT_ESC, LIT_AT, LIT_AT_BRACE, LIT_INTERP_IDENT, LIT_INTERP_IDENT_END  = Value
-  }
-
-}
-
 private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) {
 
   sealed abstract trait TokenResult
@@ -30,8 +18,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     c.isLetterOrDigit || (c == '-') || (c == '_')
   }
 
-  def isValidIdentStartChar(c: Char) =
+  def isValidVarNameStartChar(c: Char) =
     isValidIdentChar(c)
+
+  def isValidIdentStartChar(c: Char) = {
+    c.isLetter
+  }
 
   def isLineBreak(c: Char) =
     (c == '\r') || (c == '\n')
@@ -286,7 +278,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
 
     def stringLiteralAtBrace(input: Option[SourceChar]): Unit = {
       input.map { sc =>
-        if(isValidIdentStartChar(sc.c)) { capture.append(sc.c); itemCount += 1; handler = stringLiteralInterpolate }
+        if(isValidVarNameStartChar(sc.c)) { capture.append(sc.c); itemCount += 1; handler = stringLiteralInterpolate }
         else { reader.unget(sc); handler = stringLiteral }
       } getOrElse {
         unterminatedStringLiteralError(None)
@@ -307,7 +299,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       input.map { case sc @ SourceChar(c, line, col) =>
         addStringLiteralChunks()
         if(c == qChar) {
-          // the closing quote immediately succeeded to closing brace
+          // the closing quote immediately followed the closing brace
           acceptMany(tokenBuffer.toVector)
 
         } else {
@@ -323,10 +315,23 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       }
     }
 
+    def identifier(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c) }
+        else reader.unget(sc)
+      }
+      if(!more) {
+        val s = capture.result
+        accept(Identifier(s), startLine, startCol)
+      }
+    }
+      
 
     def top(input: Option[SourceChar]): Unit = {
       input.foreach { case sc @ SourceChar(c, line, col) =>
         c match {
+          case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
           case '/' => { markBegin(line, col); handler = slash }
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
