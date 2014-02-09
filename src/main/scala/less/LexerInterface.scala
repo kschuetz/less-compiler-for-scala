@@ -13,5 +13,6 @@ case class ParseError(message: String, position: Position) extends PositionedLex
 case class LexerToken(value: Token, position: Position)
 
 
-trait Lexer extends ((Reader, ((Int, Int) => Position)) => Stream[Either[LexerError, LexerToken]])
+
+trait Lexer extends ((Reader, (Int, Int) => Position) => Stream[Either[LexerError, LexerToken]])
 
