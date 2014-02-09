@@ -40,6 +40,8 @@ class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) 
   def isStringLiteralDelimiter(c: Char) =
     (c == '\'') || (c == '"')
 
+
+
   def lexerToken(token: Token, line: Int, col: Int): LexerToken =
     LexerToken(token, makeSourcePos(line, col))
 

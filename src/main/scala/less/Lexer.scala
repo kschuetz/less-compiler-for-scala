@@ -169,6 +169,36 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       if(!ok) error("# must be followed by an identifier", startLine, startCol)
     }
 
+
+    def matchOp(required: Boolean, toToken: Token, input: Option[SourceChar]): Boolean = {
+      var found = false
+      input.foreach { sc =>
+        if(sc.c == '=') { found = true; accept(toToken, startLine, startCol) }
+        else if (!required) { reader.unget(sc) }
+      }
+      if(!found && required) error("Illegal character", startLine, startCol)
+      found
+    }
+
+    def tilde1(input: Option[SourceChar]): Unit =
+      matchOp(true, Includes, input)
+
+    def pipe1(input: Option[SourceChar]): Unit =
+      matchOp(true, DashMatch, input)
+
+    def caret1(input: Option[SourceChar]): Unit =
+      matchOp(true, PrefixMatch, input)
+
+    def dollar1(input: Option[SourceChar]): Unit =
+      matchOp(true, SuffixMatch, input)
+
+    def star1(input: Option[SourceChar]): Unit = {
+      if(!matchOp(false, SubstringMatch, input)) {
+        accept(Star, startLine, startCol)
+      }
+    }
+
+
     def atIdent(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
@@ -376,6 +406,11 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '/' => { markBegin(line, col); handler = slash }
           case '#' => { markBegin(line, col); handler = hash1 }
           case '>' => { accept(Gt, line, col) }
+          case '*' => { markBegin(line, col); handler = star1 }
+          case '|' => { markBegin(line, col); handler = pipe1 }
+          case '^' => { markBegin(line, col); handler = caret1 }
+          case '~' => { markBegin(line, col); handler = tilde1 }
+          case '$' => { markBegin(line, col); handler = dollar1 }
 
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
@@ -386,6 +421,8 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
   }
+
+
 
 
   def scan: TokenResult = {

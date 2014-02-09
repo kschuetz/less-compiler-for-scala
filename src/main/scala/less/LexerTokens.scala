@@ -41,6 +41,19 @@ object tokens {
   case class StringLiteralChunk(value: String) extends Token
   case class InterpolatedIdentifier(name: String) extends Token
 
+  /*
+  INCLUDES	: '~='	;
+DASHMATCH	: '|='	;
+PREFIXMATCH	: '^='	;
+SUFFIXMATCH	: '$='	;
+SUBSTRINGMATCH	: '*='	;
+   */
+
+  case object Includes extends Token
+  case object DashMatch extends Token
+  case object PrefixMatch extends Token
+  case object SuffixMatch extends Token
+  case object SubstringMatch extends Token
 
 }
 
