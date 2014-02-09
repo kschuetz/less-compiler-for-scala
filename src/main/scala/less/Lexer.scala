@@ -55,6 +55,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       done = true
     }
 
+    def accept(token: Token, sourceChar: Option[SourceChar]): Unit = {
+      val (line, col) = toLineCol(sourceChar)
+      result = Success(LexerToken(token, makeSourcePos(line, col)))
+      done = true
+    }
+
     def acceptMany(tokens: Vector[LexerToken]): Unit = {
       result = SuccessMany(tokens)
       done = true
@@ -130,6 +136,17 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         } else ok = false
       }
       if(!ok) error("@ must be followed by a variable name or directive", startLine, startCol)
+    }
+
+    def dot1(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) {
+          reader.unget(sc)
+          accept(Dot, startLine, startCol)
+        } else ok = false
+      }
+      if(!ok) error(". must be followed by an identifier", startLine, startCol)
     }
 
     def atIdent(input: Option[SourceChar]): Unit = {
@@ -333,6 +350,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         c match {
           case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
+          case '.' => { markBegin(line, col); handler = dot1 }
           case '/' => { markBegin(line, col); handler = slash }
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
