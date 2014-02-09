@@ -141,7 +141,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     def dot1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
       input.foreach { sc =>
-        if(isValidIdentChar(sc.c)) {
+        if(sc.c.isDigit) {
+          resetCapture()
+          capture.append("0.")
+          capture.append(sc.c)
+          handler = numberFloat
+        } else if(isValidIdentChar(sc.c)) {
           reader.unget(sc)
           accept(Dot, startLine, startCol)
         } else ok = false
@@ -412,6 +417,13 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '-' => { markBegin(line, col); handler = dash1 }
           case '.' => { markBegin(line, col); handler = dot1 }
           case ';' => { accept(Semicolon, line, col) }
+          case ',' => { accept(Comma, line, col)}
+          case '{' => { accept(LBrace, line, col) }
+          case '(' => { accept(LParen, line, col) }
+          case '[' => { accept(LBracket, line, col) }
+          case '}' => { accept(RBrace, line, col) }
+          case ')' => { accept(RParen, line, col) }
+          case ']' => { accept(RBracket, line, col) }
           case ':' => { markBegin(line, col); handler = colon1 }
           case '/' => { markBegin(line, col); handler = slash }
           case '#' => { markBegin(line, col); handler = hash1 }
@@ -421,6 +433,11 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '^' => { markBegin(line, col); handler = caret1 }
           case '~' => { markBegin(line, col); handler = tilde1 }
           case '$' => { markBegin(line, col); handler = dollar1 }
+          case '+' => { accept(Plus, line, col) }
+          case '=' => { accept(Eq, line, col) }
+          case '!' => { accept(Bang, line, col) }
+          case '%' => { accept(Percent, line, col) }
+          case '&' => { accept(Ampersand, line, col)}
 
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
@@ -431,8 +448,6 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
   }
-
-
 
 
   def scan: TokenResult = {
