@@ -56,8 +56,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     var handler: (Option[SourceChar] => Unit) = top
 
     var capture: StringBuilder = null
-
-    val tokenBuffer = new collection.mutable.ArrayBuffer[LexerToken]
+    var tokenBuffer: collection.mutable.ArrayBuffer[LexerToken] = null
 
     def accept(token: Token, line: Int, col: Int): Unit = {
       result = Success(LexerToken(token, makeSourcePos(line, col)))
@@ -104,8 +103,13 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
     def resetCapture(): Unit = {
-      if(capture==null) { capture = new StringBuilder }
+      if(capture == null) { capture = new StringBuilder }
       else { capture.clear() }
+    }
+
+    def resetTokenBuffer(): Unit = {
+      if(tokenBuffer == null) { tokenBuffer = new collection.mutable.ArrayBuffer[LexerToken] }
+      else { tokenBuffer.clear() }
     }
 
     def addStringLiteralChunks(): Unit = {
@@ -327,15 +331,13 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '/' => { markBegin(line, col); handler = slash }
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
-            qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); tokenBuffer.clear(); handler = stringLiteral
+            qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); resetTokenBuffer(); handler = stringLiteral
           }
         }
       }
     }
 
   }
-
-
 
 
   def scan: TokenResult = {
