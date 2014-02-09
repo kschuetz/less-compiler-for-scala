@@ -263,7 +263,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     }
 
     def stringLiteralEsc(input: Option[SourceChar]): Unit = {
-
+      input.map { sc =>
+        if(sc.c == qChar) { capture.append(sc.c); itemCount += 1; handler = stringLiteral }
+        else { reader.unget(sc); handler = stringLiteral }
+      } getOrElse {
+        unterminatedStringLiteralError(None)
+      }
     }
 
     def stringLiteralAt(input: Option[SourceChar]): Unit = {
@@ -336,10 +341,9 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
   def scan: TokenResult = {
     import State._
     while(!done) {
-      val sc = reader.get
-      handler(sc)
+      handler(reader.get)
     }
-    State.result
+    result
   }
 
 
