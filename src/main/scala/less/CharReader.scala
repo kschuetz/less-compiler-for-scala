@@ -3,6 +3,85 @@ package com.kschuetz.less
 import java.io.Reader
 
 
+class CharReader_New(val source: Reader,
+                     private var line: Int = 1,
+                     private var col: Int = 1) {
+
+  private var pushed: List[SourceChar] = Nil
+
+  private var buffer: Option[Int] = None
+
+  private def getNextChar: Int = {
+    if(buffer.isEmpty) {
+      source.read
+    } else {
+      val res = buffer.get
+      buffer = None
+      res
+    }
+  }
+
+  def get: Option[SourceChar] = {
+    if(pushed.nonEmpty) {
+      pushed = pushed.tail
+      Some(pushed.head)
+    } else {
+      val ci = getNextChar
+      if(ci < 0) None
+      else {
+        val c = ci.toChar
+        c match {
+          case '\r' => {
+            val res = Some(SourceChar('\n', line, col))
+            line += 1
+            col = 1
+            val c2 = source.read
+            if(c2 >= 0 && c2 != 10) {
+              buffer = Some(c2)
+            }
+            res
+          }
+
+          case '\n' => {
+            val res = Some(SourceChar('\n', line, col))
+            line += 1
+            col = 1
+            res
+          }
+
+          case _ => {
+            val res = Some(SourceChar(c, line, col))
+            col += 1
+            res
+          }
+        }
+      }
+    }
+  }
+
+  def unget(item: SourceChar): Unit = {
+    pushed = item :: pushed
+  }
+
+  def lineNumber: Int = {
+    pushed.headOption.map { _.line } getOrElse line
+  }
+
+  def colNumber: Int = {
+    pushed.headOption.map { _.col } getOrElse col
+  }
+
+  def close(): Unit = {
+    source.close()
+  }
+
+}
+
+
+
+
+
+
 class CharReader(val source: Reader,
                  var line: Int,
                  var col: Int) {
