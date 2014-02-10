@@ -51,5 +51,7 @@ object tokens {
   case object SuffixMatch extends Token
   case object SubstringMatch extends Token
 
+  case class Unknown(value: String) extends Token
+
 }
 

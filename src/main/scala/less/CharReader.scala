@@ -23,8 +23,9 @@ class CharReader(val source: Reader,
 
   def get: Option[SourceChar] = {
     if(pushed.nonEmpty) {
+      val res = Some(pushed.head)
       pushed = pushed.tail
-      Some(pushed.head)
+      res
     } else {
       val ci = getNextChar
       if(ci < 0) None

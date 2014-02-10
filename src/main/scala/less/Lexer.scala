@@ -319,10 +319,8 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           ok = true
         } else if (!isLineBreak(sc.c)) {
           capture.append(sc.c)
-          sc.c match {
-            case '@' => { subItemOffset = itemCount; handler = stringLiteralAt }
-            case '\\' => { handler = stringLiteralEsc }
-          }
+          if(sc.c == '@') { subItemOffset = itemCount; handler = stringLiteralAt }
+          else if (sc.c == '\\') { handler = stringLiteralEsc }
           itemCount += 1
           ok = true
         }
@@ -410,7 +408,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       
 
     def top(input: Option[SourceChar]): Unit = {
-      input.foreach { case sc @ SourceChar(c, line, col) =>
+      input.map { case sc @ SourceChar(c, line, col) =>
         c match {
           case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
           case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
@@ -443,7 +441,15 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case ch if isStringLiteralDelimiter(ch) => {
             qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); resetTokenBuffer(); handler = stringLiteral
           }
+
+          case ch if ch.isWhitespace => { /* do nothing */ }
+          case ch => { accept(Unknown(ch.toString), line, col)}
         }
+      } getOrElse {
+
+        result = NothingLeft
+        done = true
+
       }
     }
 
