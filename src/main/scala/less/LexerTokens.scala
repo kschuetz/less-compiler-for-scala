@@ -9,6 +9,9 @@ object tokens {
 
   case object Eq extends Token
   case object Gt extends Token
+  case object Lt extends Token
+  case object GtEq extends Token
+  case object LtEq extends Token
   case object Slash extends Token
   case object Minus extends Token
   case object Plus extends Token

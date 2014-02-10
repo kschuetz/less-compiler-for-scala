@@ -257,6 +257,35 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       if(!ok) error("\\ must be followed by a digit", startLine, startCol)
     }
 
+    def eq1(input: Option[SourceChar]): Unit = {
+      var found = false
+      input.foreach { sc =>
+        if(sc.c == '<') { found = true; accept(LtEq, startLine, startCol) }
+        else if(sc.c == '>') { found = true; accept(GtEq, startLine, startCol) }
+        else {
+          reader.unget(sc)
+        }
+      }
+      if(!found) accept(Eq, startLine, startCol)
+    }
+
+    def gt1(input: Option[SourceChar]): Unit = {
+      var found = false
+      input.foreach { sc =>
+        if(sc.c == '=') { found = true; accept(GtEq, startLine, startCol) }
+        else { reader.unget(sc) }
+      }
+      if(!found) accept(Gt, startLine, startCol)
+    }
+
+    def lt1(input: Option[SourceChar]): Unit = {
+      var found = false
+      input.foreach { sc =>
+        if(sc.c == '=') { found = true; accept(LtEq, startLine, startCol) }
+        else { reader.unget(sc) }
+      }
+      if(!found) accept(Lt, startLine, startCol)
+    }
 
     def matchOp(required: Boolean, toToken: Token, input: Option[SourceChar]): Boolean = {
       var found = false
@@ -501,14 +530,15 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case ':' => { markBegin(line, col); handler = colon1 }
           case '/' => { markBegin(line, col); handler = slash }
           case '#' => { markBegin(line, col); handler = hash1 }
-          case '>' => { accept(Gt, line, col) }
+          case '>' => { markBegin(line, col); handler = gt1 }
+          case '<' => { markBegin(line, col); handler = lt1 }
+          case '=' => { markBegin(line, col); handler = eq1 }
           case '*' => { markBegin(line, col); handler = star1 }
           case '|' => { markBegin(line, col); handler = pipe1 }
           case '^' => { markBegin(line, col); handler = caret1 }
           case '~' => { markBegin(line, col); handler = tilde1 }
           case '$' => { markBegin(line, col); handler = dollar1 }
           case '+' => { accept(Plus, line, col) }
-          case '=' => { accept(Eq, line, col) }
           case '!' => { accept(Bang, line, col) }
           case '%' => { accept(Percent, line, col) }
           case '&' => { accept(Ampersand, line, col)}
