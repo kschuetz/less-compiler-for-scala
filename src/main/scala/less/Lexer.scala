@@ -31,8 +31,22 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
   def isStringLiteralDelimiter(c: Char) =
     (c == '\'') || (c == '"')
 
+  /**
+   * Extracts line and col from a Some(SourceChar), or
+   * from the reader position if None (which will point to the
+   * position at the end of input)
+   */
+  def toLineCol(sc: Option[SourceChar]): (Int, Int) = {
+    sc.map { x => (x.line, x.col) } getOrElse { (reader.line, reader.col) }
+  }
+
   def lexerToken(token: Token, line: Int, col: Int): LexerToken =
     LexerToken(token, makeSourcePos(line, col))
+
+  def lexerToken(token: Token, sourceChar: Option[SourceChar]): LexerToken = {
+    val (line, col) = toLineCol(sourceChar)
+    LexerToken(token, makeSourcePos(line, col))
+  }
 
 
   object State {
@@ -77,15 +91,6 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       val e = ParseError(msg, makeSourcePos(line, col))
       result = Failure(e)
       done = true
-    }
-
-    /**
-     * Extracts line and col from a Some(SourceChar), or
-     * from the reader position if None (which will point to the
-     * position at the end of input)
-     */
-    def toLineCol(sc: Option[SourceChar]): (Int, Int) = {
-      sc.map { x => (x.line, x.col) } getOrElse { (reader.line, reader.col) }
     }
 
     def unterminatedBlockCommentError(sourceChar: Option[SourceChar]): Unit =
@@ -133,10 +138,65 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           resetCapture()
           capture.append(sc.c)
           handler = atIdent
+        } else if(sc.c == '{') {
+            handler = atLBrace
         } else ok = false
       }
       if(!ok) error("@ must be followed by a variable name or directive", startLine, startCol)
     }
+
+    def atIdent(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c)}
+        else { reader.unget(sc) }
+      }
+      if(!more) {
+        val ident = capture.result
+        val ts = (0 until itemCount).map { n =>
+          lexerToken(At, startLine, startCol + n)
+        }.toVector :+ lexerToken(Identifier(ident), startLine, startCol + itemCount)
+        acceptMany(ts)
+      }
+    }
+
+    def atLBrace(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if (isValidIdentChar(sc.c)) {
+          resetCapture()
+          capture.append(sc.c)
+          handler = atLBraceIdent
+        } else ok = false
+      }
+      if(!ok) error("@{ must be followed by an identifier", startLine, startCol)
+    }
+
+    def atLBraceIdent(input: Option[SourceChar]): Unit = {
+      if(!input.isDefined) {
+        error("Unterminated @{} expression", input)
+      } else {
+        var ok = false
+        var more = false
+        input.foreach { sc =>
+          if(isValidIdentChar(sc.c)) { more = true; ok = true; capture.append(sc.c)}
+          else if (sc.c == '}') { ok = true }
+          else error("Illegal character in identifier", input)
+        }
+        if(ok && !more) {
+          val ident = capture.result
+          val ts = (0 until itemCount).map { n =>
+            lexerToken(At, startLine, startCol + n)
+          }.toVector :+
+            lexerToken(LBrace, startLine, startCol + itemCount) :+
+            lexerToken(Identifier(ident), startLine, startCol + itemCount + 1) :+
+            lexerToken(RBrace, input)
+
+          acceptMany(ts)
+        }
+      }
+    }
+
 
     def dot1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
@@ -148,7 +208,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           handler = numberFloat
         } else if(sc.c == '.') {
           handler = dot2
-        } else if(isValidIdentChar(sc.c)) {
+        } else if(isValidIdentChar(sc.c) || (sc.c == '@')) {
           reader.unget(sc)
           accept(Dot, startLine, startCol)
         } else ok = false
@@ -232,21 +292,6 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     def star1(input: Option[SourceChar]): Unit = {
       if(!matchOp(false, SubstringMatch, input)) {
         accept(Star, startLine, startCol)
-      }
-    }
-
-    def atIdent(input: Option[SourceChar]): Unit = {
-      var more = false
-      input.foreach { sc =>
-        if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c)}
-        else { reader.unget(sc) }
-      }
-      if(!more) {
-        val ident = capture.result
-        val ts = (0 until itemCount).map { n =>
-          lexerToken(At, startLine, startCol + n)
-        }.toVector :+ lexerToken(Identifier(ident), startLine, startCol + itemCount)
-        acceptMany(ts)
       }
     }
 
