@@ -123,7 +123,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         tokenBuffer += lexerToken(StringLiteralChunk(s.take(subItemOffset)), startLine, startCol)
       }
 
-      val ident = s.substring(subItemOffset + 2, s.length - 1)
+      val ident = s.substring(subItemOffset + 2, s.length)
       tokenBuffer += lexerToken(InterpolatedIdentifier(ident), startLine, startCol + subItemOffset)
 
     }
@@ -463,7 +463,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     def stringLiteralInterpolate(input: Option[SourceChar]): Unit = {
       input.map { sc =>
         if(sc.c == '}') { handler = stringLiteralInterpolateEnd }
-        if(isValidIdentChar(sc.c)) { capture.append(sc.c); itemCount += 1 }
+        else if(isValidIdentChar(sc.c)) { capture.append(sc.c); itemCount += 1 }
         else { reader.unget(sc); handler = stringLiteral }
       } getOrElse {
         unterminatedStringLiteralError(None)

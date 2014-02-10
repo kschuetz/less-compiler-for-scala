@@ -14,7 +14,7 @@ object RunCompiler {
         case Right(t) => {
           val doPrint = t.value match {
             case tokens.Unknown(_) => true
-            case _ => false
+            case _ => true
           }
           if(doPrint) {
             println(t.toString)
@@ -34,6 +34,7 @@ object RunCompiler {
   def main(args : Array[String]) : Unit = {
     println("Hello world!")
     val testFile1 = "E:/projects/apps/web/MusicLibraryExplorer/client/bower_components/bootstrap/less/mixins.less"
-    compileFile(new File(testFile1))
+    val testFile2 = "E:/projects/apps/web/MusicLibraryExplorer/client/app/main.less"
+    compileFile(new File(testFile2))
   }
 }
