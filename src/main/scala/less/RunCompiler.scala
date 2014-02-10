@@ -33,7 +33,7 @@ object RunCompiler {
 
   def main(args : Array[String]) : Unit = {
     println("Hello world!")
-    val testFile1 = "E:/projects/apps/web/MusicLibraryExplorer/client/bower_components/bootstrap/less/forms.less"
+    val testFile1 = "E:/projects/apps/web/MusicLibraryExplorer/client/bower_components/bootstrap/less/mixins.less"
     compileFile(new File(testFile1))
   }
 }

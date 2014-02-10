@@ -22,6 +22,7 @@ object tokens {
   case object Semicolon extends Token
   case object Comma extends Token
   case object Dot extends Token
+  case object DotDotDot extends Token
   case object Hash extends Token
   case object Bang extends Token
   case object Percent extends Token

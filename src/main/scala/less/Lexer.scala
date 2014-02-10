@@ -146,12 +146,24 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           capture.append("0.")
           capture.append(sc.c)
           handler = numberFloat
+        } else if(sc.c == '.') {
+          handler = dot2
         } else if(isValidIdentChar(sc.c)) {
           reader.unget(sc)
           accept(Dot, startLine, startCol)
         } else ok = false
       }
       if(!ok) error(". must be followed by an identifier", startLine, startCol)
+    }
+
+    def dot2(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if(sc.c == '.') {
+          accept(DotDotDot, startLine, startCol)
+        } else ok = false
+      }
+      if(!ok) error("Unrecognized operator (..)", startLine, startCol)
     }
 
     def colon1(input: Option[SourceChar]): Unit = {
