@@ -44,7 +44,8 @@ object tokens {
 
   case class Colon(rightPadded: Boolean) extends Token
 
-
+  case object StringLiteralBegin extends Token
+  case object StringLiteralEnd extends Token
   case class StringLiteralChunk(value: String) extends Token
   case class InterpolatedIdentifier(name: String) extends Token
 

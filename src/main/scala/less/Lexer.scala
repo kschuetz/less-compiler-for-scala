@@ -414,12 +414,10 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         if(sc.c == qChar) {
           val s = capture.result
           val t = StringLiteralChunk(s)
-          if(tokenBuffer.isEmpty) {
-            accept(t, startLine, startCol)
-          } else {
-            tokenBuffer += lexerToken(t, startLine, startCol)
-            acceptMany(tokenBuffer.toVector)
-          }
+
+          tokenBuffer += lexerToken(t, startLine, startCol)
+          tokenBuffer += lexerToken(StringLiteralEnd, sc.line, sc.col)
+          acceptMany(tokenBuffer.toVector)
 
           ok = true
         } else if (!isLineBreak(sc.c)) {
@@ -475,6 +473,8 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         addStringLiteralChunks()
         if(c == qChar) {
           // the closing quote immediately followed the closing brace
+
+          tokenBuffer += lexerToken(StringLiteralEnd, sc.line, sc.col)
           acceptMany(tokenBuffer.toVector)
 
         } else {
@@ -546,7 +546,9 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
 
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
-            qChar = ch; markBegin(line, col); itemCount = 0; resetCapture(); resetTokenBuffer(); handler = stringLiteral
+            qChar = ch; markBegin(line, col); itemCount = 0;
+            resetCapture(); resetTokenBuffer(); tokenBuffer.append(lexerToken(StringLiteralBegin, line, col))
+            handler = stringLiteral
           }
 
           case ch if ch.isWhitespace => { /* do nothing */ }
