@@ -7,7 +7,11 @@ object source {
     def columnNumber: Int
   }
 
-  case class FileSourcePosition(file: java.io.File, lineNumber: Int, columnNumber: Int) extends Position
+  case class FileSourcePosition(file: java.io.File, lineNumber: Int, columnNumber: Int) extends Position {
+    override def toString = {
+      s"${file.getName()}:$lineNumber:$columnNumber"
+    }
+  }
 
   case class StringSourcePosition(lineNumber: Int, columnNumber: Int) extends Position
 

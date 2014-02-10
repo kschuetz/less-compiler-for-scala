@@ -174,6 +174,17 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       if(!ok) error("# must be followed by an identifier", startLine, startCol)
     }
 
+    def backslash1(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if(sc.c.isDigit) {
+          reader.unget(sc)
+          accept(Backslash, startLine, startCol)
+        } else ok = false
+      }
+      if(!ok) error("\\ must be followed by a digit", startLine, startCol)
+    }
+
 
     def matchOp(required: Boolean, toToken: Token, input: Option[SourceChar]): Boolean = {
       var found = false
@@ -185,8 +196,17 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       found
     }
 
-    def tilde1(input: Option[SourceChar]): Unit =
-      matchOp(true, Includes, input)
+    def tilde1(input: Option[SourceChar]): Unit = {
+      var found = false
+      input.map { sc =>
+        if(isStringLiteralDelimiter(sc.c)) {
+          reader.unget(sc)
+          found = true
+          accept(Tilde, startLine, startCol)
+        }
+      }
+      if(!found) matchOp(true, Includes, input)
+    }
 
     def pipe1(input: Option[SourceChar]): Unit =
       matchOp(true, DashMatch, input)
@@ -202,7 +222,6 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         accept(Star, startLine, startCol)
       }
     }
-
 
     def atIdent(input: Option[SourceChar]): Unit = {
       var more = false
@@ -436,6 +455,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           case '!' => { accept(Bang, line, col) }
           case '%' => { accept(Percent, line, col) }
           case '&' => { accept(Ampersand, line, col)}
+          case '\\' => { markBegin(line, col); handler = backslash1 }
 
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {

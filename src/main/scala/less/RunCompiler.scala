@@ -8,13 +8,26 @@ object RunCompiler {
     val reader = new BufferedReader(new FileReader(file))
     val lexer = LessLexer(reader, source.FileSourcePosition.factory(file))
     val items = lexer.toList
+    var hasErrors = false
     items.foreach { maybeToken =>
       maybeToken match {
-        case Right(t) => print(t.toString)
-        case Left(e) => print("error:" + e.toString)
+        case Right(t) => {
+          val doPrint = t.value match {
+            case tokens.Unknown(_) => true
+            case _ => false
+          }
+          if(doPrint) {
+            println(t.toString)
+          }
+        }
+        case Left(e) => {
+          hasErrors = true
+          println("error:" + e.toString)
+        }
       }
 
     }
+    if(!hasErrors) println("No errors!")
   }
 
 

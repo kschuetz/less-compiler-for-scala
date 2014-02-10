@@ -10,7 +10,11 @@ abstract trait PositionedLexerError extends LexerError {
 
 case class ParseError(message: String, position: Position) extends PositionedLexerError
 
-case class LexerToken(value: Token, position: Position)
+case class LexerToken(value: Token, position: Position) {
+  override def toString = {
+    s"<$value @ $position>"
+  }
+}
 
 
 

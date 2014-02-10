@@ -25,6 +25,7 @@ object tokens {
   case object Hash extends Token
   case object Bang extends Token
   case object Percent extends Token
+  case object Tilde extends Token
   case object At extends Token
   case object Ampersand extends Token
   case class Identifier(name: String) extends Token
@@ -43,7 +44,7 @@ object tokens {
   case class StringLiteralChunk(value: String) extends Token
   case class InterpolatedIdentifier(name: String) extends Token
 
-
+  case object Backslash extends Token
 
   case object Includes extends Token
   case object DashMatch extends Token
