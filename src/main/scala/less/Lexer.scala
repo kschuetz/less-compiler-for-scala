@@ -257,15 +257,6 @@ private class LessLexerState(reader: CharReader,
       }
       if(!ok) error("Expected {", startLine, startCol)
     }
-                 /*
-    def colon1(input: Option[SourceChar]): Unit = {
-      var rightPadded = !input.isDefined
-      input.foreach { sc =>
-        if(sc.c.isWhitespace) rightPadded = true
-        else reader.unget(sc)
-      }
-      accept(Colon(rightPadded), startLine, startCol)
-    }              */
 
     def hash1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
