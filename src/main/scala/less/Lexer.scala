@@ -22,7 +22,11 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     isValidIdentChar(c)
 
   def isValidIdentStartChar(c: Char) = {
-    c.isLetter
+    c.isLetter || (c == '-')
+  }
+
+  def isValidHashIdentChar(c: Char) = {
+    isValidIdentChar(c)
   }
 
   def isLineBreak(c: Char) =
@@ -247,12 +251,25 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     def hash1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
       input.foreach { sc =>
-        if(isValidIdentChar(sc.c)) {
-          reader.unget(sc)
-          accept(Hash, startLine, startCol)
+        if(isValidHashIdentChar(sc.c)) {
+          resetCapture()
+          capture.append(sc.c)
+          handler = hashIdent
         } else ok = false
       }
       if(!ok) error("# must be followed by an identifier", startLine, startCol)
+    }
+
+    def hashIdent(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(isValidHashIdentChar(sc.c)) { more = true; capture.append(sc.c)}
+        else { reader.unget(sc) }
+      }
+      if(!more) {
+        val ident = capture.result
+        accept(HashIdentifier(ident), startLine, startCol)
+      }
     }
 
     def backslash1(input: Option[SourceChar]): Unit = {

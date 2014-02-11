@@ -116,7 +116,7 @@ class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) 
 
       state match {
         case SLASH => accept(Slash, startLine, startCol)
-
+                  /*
         case AT_IDENT => {
           val ident = capture.result
 
@@ -125,7 +125,7 @@ class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) 
           }.toVector :+ lexerToken(Identifier(ident), startLine, startCol + itemCount)
 
           acceptMany(ts)
-        }
+        }        */
 
         case BLOCKCOMMENT => {
           if(!endOfInput) {
@@ -184,8 +184,8 @@ class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) 
             case '(' =>   accept(LParen, line, col)
             case ')' =>   accept(RParen, line, col)
             case ',' =>   accept(Comma, line, col)
-            case '.' =>   accept(Dot, line, col)
-            case '#' =>   accept(Hash, line, col)
+            //case '.' =>   accept(Dot, line, col)
+            //case '#' =>   accept(Hash, line, col)
             case ch if isStringLiteralDelimiter(ch) => {
               qChar = ch
               markBegin(line, col)
