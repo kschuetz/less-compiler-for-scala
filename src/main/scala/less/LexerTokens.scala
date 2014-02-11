@@ -61,11 +61,12 @@ object tokens {
   case class DotIdentifier(name: String) extends Token
 
   case class HashIdentifier(name: String) extends Token {
-    def asHexString: Option[String] = {
-      // TODO: implement asHexString
-      None
+    val asHexString: Option[String] = {
+      if(name.forall { c => c.isDigit || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')}) {
+        Some(name.toLowerCase)
+      } else None
     }
-    val isValidColorHex = asHexString.isDefined
+    val isValidColorHex = ((name.length == 3) || (name.length == 6)) && asHexString.isDefined
   }
 
   case class AtIdentifier(name: String) extends Token
