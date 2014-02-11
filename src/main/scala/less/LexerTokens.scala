@@ -32,7 +32,7 @@ object tokens {
   case object Tilde extends Token
   case object At extends Token
   case object Ampersand extends Token
-  case class Identifier(name: String) extends Token
+
   case class WholeNumber(value: BigInt) extends Token
   case class FloatNumber(value: Double) extends Token
   case class BlockComment(value: String) extends Token {
@@ -56,6 +56,13 @@ object tokens {
   case object PrefixMatch extends Token
   case object SuffixMatch extends Token
   case object SubstringMatch extends Token
+
+  case class Identifier(name: String) extends Token
+  case class DotIdentifier(name: String) extends Token
+  case class HashIdentifier(name: String) extends Token
+  case class AtIdentifier(name: String) extends Token
+  case class AtAtIdentifier(name: String) extends Token
+  case class AtBraceIdentifier(name: String) extends Token
 
   case class Unknown(value: String) extends Token
 

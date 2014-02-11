@@ -57,6 +57,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     var startLine: Int = 0
     var startCol: Int = 0
     var itemCount: Int = 0
+    var subState: Int = 0
     var subItemOffset: Int = 0;
     var qChar: Char = '\0'
     var handler: (Option[SourceChar] => Unit) = top
@@ -130,14 +131,63 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
 
     // ***** handlers *****
 
+
     def at1(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if (isValidVarNameStartChar(sc.c)) {
+          resetCapture()
+          capture.append(sc.c)
+          if(subState == 2) handler = atBraceIdent
+          else handler = atIdent
+        }
+        else if((subState == 0) && (sc.c == '@')) subState = 1
+        else if((subState == 0) && (sc.c == '{')) subState = 2
+        else ok = false
+      }
+      if(!ok) error("@ must be followed by a variable name or directive", startLine, startCol)
+    }
+
+    def atIdent(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c)}
+        else { reader.unget(sc) }
+      }
+      if(!more) {
+        val ident = capture.result
+        if(subState == 1) accept(AtAtIdentifier(ident), startLine, startCol)
+        else accept(AtIdentifier(ident), startLine, startCol)
+      }
+    }
+
+    def atBraceIdent(input: Option[SourceChar]): Unit = {
+      if(!input.isDefined) {
+        error("Unterminated @{} expression", input)
+      } else {
+        var ok = false
+        var more = false
+        input.foreach { sc =>
+          if(isValidIdentChar(sc.c)) { more = true; ok = true; capture.append(sc.c)}
+          else if (sc.c == '}') { ok = true }
+          else error("Illegal character in identifier", input)
+        }
+        if(ok && !more) {
+          val ident = capture.result
+          accept(AtBraceIdentifier(ident), startLine, startCol)
+        }
+      }
+    }
+    
+
+    def at1_old(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
       input.foreach { sc =>
         if(sc.c == '@') { itemCount += 1 }
         else if (isValidIdentChar(sc.c)) {
           resetCapture()
           capture.append(sc.c)
-          handler = atIdent
+          handler = atIdent_old
         } else if(sc.c == '{') {
             handler = atLBrace
         } else ok = false
@@ -145,7 +195,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       if(!ok) error("@ must be followed by a variable name or directive", startLine, startCol)
     }
 
-    def atIdent(input: Option[SourceChar]): Unit = {
+    def atIdent_old(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
         if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c)}
@@ -516,7 +566,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       input.map { case sc @ SourceChar(c, line, col) =>
         c match {
           case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
-          case '@' => { itemCount = 1; markBegin(line, col); handler = at1 }
+          case '@' => { markBegin(line, col); subState = 0; handler = at1 }
           case '-' => { markBegin(line, col); handler = dash1 }
           case '.' => { markBegin(line, col); handler = dot1 }
           case ';' => { accept(Semicolon, line, col) }
