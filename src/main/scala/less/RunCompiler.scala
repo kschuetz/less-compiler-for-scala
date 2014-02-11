@@ -36,6 +36,8 @@ object RunCompiler {
     val testFile1 = "E:/projects/apps/web/MusicLibraryExplorer/client/bower_components/bootstrap/less/mixins.less"
     val testFile2 = "E:/projects/apps/web/MusicLibraryExplorer/client/app/main.less"
     val testFile3 = "E:/projects/apps/web/MusicLibraryExplorer/client/bower_components/jquery/jquery.js"
-    compileFile(new File(testFile1))
+    val testFile4 = "C:/Temp/less-sandbox/app/assets/stylesheets/main.less"
+
+    compileFile(new File(testFile4))
   }
 }

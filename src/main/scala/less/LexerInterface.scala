@@ -20,7 +20,10 @@ case class LexerToken(value: Token,                         // token type and le
     position.columnNumber == 1
 
   override def toString = {
-    s"<$value @ $position>"
+    val wFlag = if(followsWhitespace) "w" else ""
+    val nFlag = if(onNewLine) "n" else ""
+    val cFlag = if(immediatelyFollowsComment) "c" else ""
+    s"<$value @ $position $wFlag$nFlag$cFlag>"
   }
 }
 
