@@ -138,7 +138,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         if (isValidVarNameStartChar(sc.c)) {
           resetCapture()
           capture.append(sc.c)
-          if(subState == 2) handler = atBraceIdent
+          if(subState == 2) { subState = 0; handler = atBraceIdent }
           else handler = atIdent
         }
         else if((subState == 0) && (sc.c == '@')) subState = 1
@@ -174,11 +174,11 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         }
         if(ok && !more) {
           val ident = capture.result
-          accept(AtBraceIdentifier(ident), startLine, startCol)
+          if(subState == 1) accept(DotAtBraceIdentifier(ident), startLine, startCol)
+          else accept(AtBraceIdentifier(ident), startLine, startCol)
         }
       }
     }
-
 
     def dot1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
@@ -190,10 +190,12 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
           handler = numberFloat
         } else if(sc.c == '.') {
           handler = dot2
-        } else if(isValidIdentChar(sc.c) || (sc.c == '@')) {
-          reader.unget(sc)
-          accept(Dot, startLine, startCol)
-        } else ok = false
+        } else if(isValidIdentStartChar(sc.c)) {
+          resetCapture()
+          capture.append(sc.c)
+          handler = dotIdent
+        } else if(sc.c == '@') handler = dotAt
+          else ok = false
       }
       if(!ok) error(". must be followed by an identifier", startLine, startCol)
     }
@@ -206,6 +208,31 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
         } else ok = false
       }
       if(!ok) error("Unrecognized operator (..)", startLine, startCol)
+    }
+
+    def dotIdent(input: Option[SourceChar]): Unit = {
+      var more = false
+      input.foreach { sc =>
+        if(isValidIdentChar(sc.c)) { more = true; capture.append(sc.c)}
+        else { reader.unget(sc) }
+      }
+      if(!more) {
+        val ident = capture.result
+        accept(DotIdentifier(ident), startLine, startCol)
+      }
+    }
+
+    def dotAt(input: Option[SourceChar]): Unit = {
+      var ok = input.isDefined
+      input.foreach { sc =>
+        if(sc.c == '{') {
+          ok = true
+          resetCapture()
+          subState = 1
+          handler = atBraceIdent
+        }
+      }
+      if(!ok) error("Expected {", startLine, startCol)
     }
 
     def colon1(input: Option[SourceChar]): Unit = {

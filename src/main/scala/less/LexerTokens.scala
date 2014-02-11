@@ -63,6 +63,7 @@ object tokens {
   case class AtIdentifier(name: String) extends Token
   case class AtAtIdentifier(name: String) extends Token
   case class AtBraceIdentifier(name: String) extends Token
+  case class DotAtBraceIdentifier(name: String) extends Token
 
   case class Unknown(value: String) extends Token
 
