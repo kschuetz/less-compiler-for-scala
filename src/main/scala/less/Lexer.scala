@@ -208,7 +208,7 @@ private class LessLexerState(reader: CharReader,
       input.foreach { sc =>
         if(sc.c.isDigit) {
           resetCapture()
-          capture.append("0.")
+          capture.append('.')
           capture.append(sc.c)
           handler = numberFloat
         } else if(sc.c == '.') {
@@ -412,9 +412,33 @@ private class LessLexerState(reader: CharReader,
     def number(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
+        var discard = false
+
         if(sc.c.isDigit) { more = true; capture.append(sc.c) }
         else if(sc.c == '.') { more = true; capture.append('.'); handler = numberDot }
-        else reader.unget(sc)
+        else if(sc.c == 'e' || sc.c == 'E') {
+          discard = true
+          reader.get.map { c1 =>
+            if(c1.c == '+' || c1.c == '-') reader.get.map { c2 =>
+              if(c2.c.isDigit) {
+                // 1e+2
+                more = true
+                subState = 0
+                handler = numberFloat
+              }
+              reader.unget(c2)
+            } else if (c1.c.isDigit) {
+              // 1e2
+              more = true
+              subState = 0
+              handler = numberFloat
+            }
+            reader.unget(c1)
+          }
+
+        } else discard = true
+
+        if(discard) reader.unget(sc)
       }
       if(!more) {
         val s = capture.result
@@ -425,7 +449,7 @@ private class LessLexerState(reader: CharReader,
     def numberDot(input: Option[SourceChar]): Unit = {
       var ok = false
       input.foreach { sc =>
-        if(sc.c.isDigit) { ok = true; capture.append(sc.c); handler = numberFloat }
+        if(sc.c.isDigit) { ok = true; capture.append(sc.c); subState = 0; handler = numberFloat }
       }
       if(!ok) error("Expected digit", input)
     }
@@ -433,13 +457,33 @@ private class LessLexerState(reader: CharReader,
     def numberFloat(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
-        if(sc.c.isDigit) { more = true; capture.append(sc.c) }
-        else reader.unget(sc)
+        var keep = false
+        if(sc.c.isDigit) { more = true; keep = true; capture.append(sc.c) }
+        else if(subState == 0 && (sc.c == 'e' || sc.c == 'E')) {
+          reader.get.map { c1 =>
+            if(c1.c == '+' || c1.c == '-') reader.get.map { c2 =>
+              if(c2.c.isDigit) {
+                subState = 1
+                capture.append(sc.c)
+                capture.append(c1.c)
+                capture.append(c2.c)
+                more = true
+                keep = true
+              } else {
+                reader.unget(c2)
+                reader.unget(c1)
+              }
+            } else {
+              reader.unget(c1)
+            }
+          }
+        }
+        if(!keep) reader.unget(sc)
       }
       if(!more) {
         val s = capture.result()
         Try(s.toDouble).toOption match {
-          case Some(d) => accept(FloatNumber(d), startLine, startCol)
+          case Some(d) => accept(FloatNumber(s, d), startLine, startCol)
           case _ => error("Could not parse floating point number", startLine, startCol)
         }
       }
