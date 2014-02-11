@@ -6,7 +6,6 @@ sealed abstract trait Token {
 }
 
 object tokens {
-
   case object Eq extends Token
   case object Gt extends Token
   case object Lt extends Token

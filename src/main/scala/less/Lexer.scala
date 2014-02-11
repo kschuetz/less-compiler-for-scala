@@ -5,7 +5,9 @@ import java.io.Reader
 import scala.util.Try
 
 
-private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Position) {
+private class LessLexerState(reader: CharReader,
+                             makeSourcePos: (Int, Int) => Position,
+                             prevToken: Option[Token]) {
 
   sealed abstract trait TokenResult
   case class Success(token: LexerToken) extends TokenResult
@@ -619,10 +621,10 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
   def next: Stream[Either[LexerError, LexerToken]] = {
     scan match {
       case Success(t) => {
-        Right(t) #:: (new LessLexerState(reader, makeSourcePos)).next
+        Right(t) #:: (new LessLexerState(reader, makeSourcePos, Some(t.value))).next
       }
       case SuccessMany(ts) => {
-         ts.foldRight((new LessLexerState(reader, makeSourcePos)).next){ Right(_) #:: _ }
+         ts.foldRight((new LessLexerState(reader, makeSourcePos, None)).next){ Right(_) #:: _ }
       }
       case Failure(e) => {
         reader.close()
@@ -641,7 +643,7 @@ object LessLexer extends Lexer {
 
   def apply(reader: Reader, makeSourcePos: (Int, Int) => Position): Stream[Either[LexerError, LexerToken]] = {
     val charReader = new CharReader(reader, 1, 1)
-    (new LessLexerState(charReader, makeSourcePos)).next
+    (new LessLexerState(charReader, makeSourcePos, None)).next
   }
 
 }
