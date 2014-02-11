@@ -23,6 +23,7 @@ object tokens {
   case object RBracket extends Token
   case object Semicolon extends Token
   case object Comma extends Token
+  case object Colon extends Token
   case object DotDotDot extends Token
   case object Bang extends Token
   case object Percent extends Token
@@ -36,8 +37,6 @@ object tokens {
   case class InlineComment(value: String) extends Token {
     override def isComment: Boolean = true
   }
-
-  case class Colon(potentialPrefix: Boolean) extends Token
 
   case object SingleQuoteLiteral extends Token
   case object DoubleQuoteLiteral extends Token

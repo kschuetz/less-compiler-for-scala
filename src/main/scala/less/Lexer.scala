@@ -257,7 +257,7 @@ private class LessLexerState(reader: CharReader,
       }
       if(!ok) error("Expected {", startLine, startCol)
     }
-
+                 /*
     def colon1(input: Option[SourceChar]): Unit = {
       var rightPadded = !input.isDefined
       input.foreach { sc =>
@@ -265,7 +265,7 @@ private class LessLexerState(reader: CharReader,
         else reader.unget(sc)
       }
       accept(Colon(rightPadded), startLine, startCol)
-    }
+    }              */
 
     def hash1(input: Option[SourceChar]): Unit = {
       var ok = input.isDefined
@@ -585,7 +585,7 @@ private class LessLexerState(reader: CharReader,
           case '}' => { accept(RBrace, line, col) }
           case ')' => { accept(RParen, line, col) }
           case ']' => { accept(RBracket, line, col) }
-          case ':' => { markBegin(line, col); handler = colon1 }
+          case ':' => { accept(Colon, line, col) }
           case '/' => { markBegin(line, col); handler = slash }
           case '#' => { markBegin(line, col); handler = hash1 }
           case '>' => { markBegin(line, col); handler = gt1 }
