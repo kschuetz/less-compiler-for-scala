@@ -694,7 +694,7 @@ private class LessLexerState(reader: CharReader,
 object LessLexer extends Lexer {
 
   def apply(reader: Reader, makeSourcePos: (Int, Int) => Position): Stream[Either[LexerError, LexerToken]] = {
-    val charReader = new CharReader(reader, 1, 1)
+    val charReader = new CharReader(reader, 1, 1) with Markable
     (new LessLexerState(charReader, makeSourcePos, None)).next
   }
 
