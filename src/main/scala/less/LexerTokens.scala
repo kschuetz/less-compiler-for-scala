@@ -38,7 +38,7 @@ object tokens {
     override def isComment: Boolean = true
   }
 
-  case class Colon(rightPadded: Boolean) extends Token
+  case class Colon(potentialPrefix: Boolean) extends Token
 
   case object SingleQuoteLiteral extends Token
   case object DoubleQuoteLiteral extends Token

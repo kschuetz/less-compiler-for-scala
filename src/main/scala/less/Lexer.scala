@@ -29,6 +29,10 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     isValidIdentChar(c)
   }
 
+  def isValidPseudoClassStartChar(c: Char) = {
+    c.isLetterOrDigit || (c == '-') || (c == '_') || (c ==':')
+  }
+
   def isLineBreak(c: Char) =
     (c == '\r') || (c == '\n')
 
