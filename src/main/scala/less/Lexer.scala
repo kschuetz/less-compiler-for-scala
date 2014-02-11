@@ -50,14 +50,6 @@ private class LessLexerState(reader: CharReader,
     sc.map { x => (x.line, x.col) } getOrElse { (reader.line, reader.col) }
   }
 
-  def lexerToken(token: Token, line: Int, col: Int): LexerToken =
-    LexerToken(token, makeSourcePos(line, col))
-
-  def lexerToken(token: Token, sourceChar: Option[SourceChar]): LexerToken = {
-    val (line, col) = toLineCol(sourceChar)
-    LexerToken(token, makeSourcePos(line, col))
-  }
-
 
   object State {
     import tokens._
@@ -71,18 +63,39 @@ private class LessLexerState(reader: CharReader,
     var subItemOffset: Int = 0;
     var qChar: Char = '\0'
     var handler: (Option[SourceChar] => Unit) = top
+    
+    var whitespaceEncountered: Boolean = false
+    var newLineEncountered: Boolean = false
 
     var capture: StringBuilder = null
     var tokenBuffer: collection.mutable.ArrayBuffer[LexerToken] = null
 
+
+    def makeLexerToken(token: Token, line: Int, col: Int, firstInSequence: Boolean = true): LexerToken = {
+      val followsWhitespace = firstInSequence && (whitespaceEncountered || newLineEncountered ||
+        prevToken.map(_.isComment).getOrElse(false))
+      val immediatelyFollowsComment = firstInSequence && (!(whitespaceEncountered || newLineEncountered) && (prevToken.map(_.isComment).getOrElse(false)))
+      
+      LexerToken(token, 
+        makeSourcePos(line, col),
+        followsWhitespace,
+        newLineEncountered && firstInSequence,
+        immediatelyFollowsComment)
+    }
+
+    def makeLexerToken(token: Token, sourceChar: Option[SourceChar]): LexerToken = {
+      val (line, col) = toLineCol(sourceChar)
+      makeLexerToken(token, line, col)
+    }
+
     def accept(token: Token, line: Int, col: Int): Unit = {
-      result = Success(LexerToken(token, makeSourcePos(line, col)))
+      result = Success(makeLexerToken(token, line, col))
       done = true
     }
 
     def accept(token: Token, sourceChar: Option[SourceChar]): Unit = {
       val (line, col) = toLineCol(sourceChar)
-      result = Success(LexerToken(token, makeSourcePos(line, col)))
+      result = Success(makeLexerToken(token, line, col))
       done = true
     }
 
@@ -131,11 +144,11 @@ private class LessLexerState(reader: CharReader,
 
       val s = capture.result()
       if(subItemOffset > 0) {
-        tokenBuffer += lexerToken(StringLiteralChunk(s.take(subItemOffset)), startLine, startCol)
+        tokenBuffer += makeLexerToken(StringLiteralChunk(s.take(subItemOffset)), startLine, startCol, false)
       }
 
       val ident = s.substring(subItemOffset + 2, s.length)
-      tokenBuffer += lexerToken(InterpolatedIdentifier(ident), startLine, startCol + subItemOffset)
+      tokenBuffer += makeLexerToken(InterpolatedIdentifier(ident), startLine, startCol + subItemOffset, false)
 
     }
 
@@ -360,6 +373,7 @@ private class LessLexerState(reader: CharReader,
       var more = false
       input.foreach { sc =>
         if(!isLineBreak(sc.c)) { more = true; capture.append(sc.c) }
+        else { reader.unget(sc) }
       }
       if(!more) {
         val s = capture.result
@@ -447,8 +461,8 @@ private class LessLexerState(reader: CharReader,
           val s = capture.result
           val t = StringLiteralChunk(s)
 
-          tokenBuffer += lexerToken(t, startLine, startCol)
-          tokenBuffer += lexerToken(StringLiteralEnd, sc.line, sc.col)
+          tokenBuffer += makeLexerToken(t, startLine, startCol, false)
+          tokenBuffer += makeLexerToken(StringLiteralEnd, sc.line, sc.col, false)
           acceptMany(tokenBuffer.toVector)
 
           ok = true
@@ -506,7 +520,7 @@ private class LessLexerState(reader: CharReader,
         if(c == qChar) {
           // the closing quote immediately followed the closing brace
 
-          tokenBuffer += lexerToken(StringLiteralEnd, sc.line, sc.col)
+          tokenBuffer += makeLexerToken(StringLiteralEnd, sc.line, sc.col, false)
           acceptMany(tokenBuffer.toVector)
 
         } else {
@@ -553,7 +567,7 @@ private class LessLexerState(reader: CharReader,
         else if(delimiter == '"') DoubleQuoteLiteral
         else SingleQuoteLiteral
 
-      tokenBuffer.append(lexerToken(openToken, startLine, startCol))
+      tokenBuffer.append(makeLexerToken(openToken, startLine, startCol))
     }
 
     def top(input: Option[SourceChar]): Unit = {
@@ -595,7 +609,8 @@ private class LessLexerState(reader: CharReader,
             handler = stringLiteral
           }
 
-          case ch if ch.isWhitespace => { /* do nothing */ }
+          case ch if isLineBreak(ch) => { newLineEncountered = true; whitespaceEncountered = true }
+          case ch if ch.isWhitespace => { whitespaceEncountered = true }
           case ch => { accept(Unknown(ch.toString), line, col)}
         }
       } getOrElse {
@@ -624,7 +639,9 @@ private class LessLexerState(reader: CharReader,
         Right(t) #:: (new LessLexerState(reader, makeSourcePos, Some(t.value))).next
       }
       case SuccessMany(ts) => {
-         ts.foldRight((new LessLexerState(reader, makeSourcePos, None)).next){ Right(_) #:: _ }
+        val lastToken = ts.lastOption.map { _.value }
+        val nextState = (new LessLexerState(reader, makeSourcePos, lastToken)).next
+        ts.foldRight(nextState){ Right(_) #:: _ }
       }
       case Failure(e) => {
         reader.close()
