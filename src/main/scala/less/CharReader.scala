@@ -79,6 +79,41 @@ class CharReader(val source: Reader,
 }
 
 
+trait Markable extends CharReader {
+
+  private var memory: List[SourceChar] = Nil
+  private var marks: List[Int] = Nil
+  private var memorySize: Int = 0
+
+  override def get: Option[SourceChar] = {
+    var result = super.get
+    if(marks.nonEmpty) result.foreach { sc =>
+      memorySize += 1
+      memory = sc :: memory
+    }
+    result
+  }
+
+  def mark(): Unit = {
+    marks = memorySize :: marks
+  }
+
+  def unmark(): Unit = {
+    val targetSize = marks.head
+    memory = memory.drop(memorySize - targetSize)
+    memorySize = targetSize
+    marks = marks.tail
+  }
+
+  def rewind(): Unit = {
+    val targetSize = marks.head
+    while(memorySize > targetSize) {
+      unget(memory.head)
+      memorySize -= 1
+    }
+  }
+
+}
 
 
 
