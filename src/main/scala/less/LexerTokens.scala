@@ -27,7 +27,6 @@ object tokens {
   case object DotDotDot extends Token
   case object Bang extends Token
   case object Percent extends Token
-  case object Tilde extends Token
   case object Ampersand extends Token
 
   case class WholeNumber(value: BigInt) extends Token
@@ -44,11 +43,10 @@ object tokens {
   case object SingleQuoteLiteral extends Token
   case object DoubleQuoteLiteral extends Token
   case object TildeQuoteLiteral extends Token
-
-  case object StringLiteralBegin extends Token
-  case object StringLiteralEnd extends Token
   case class StringLiteralChunk(value: String) extends Token
   case class InterpolatedIdentifier(name: String) extends Token
+  case object StringLiteralEnd extends Token
+
 
   case object Backslash extends Token
 
