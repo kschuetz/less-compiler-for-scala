@@ -61,7 +61,7 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
     var startLine: Int = 0
     var startCol: Int = 0
     var itemCount: Int = 0
-    var subState: Int = 0
+    var subState: Int = 0     // context sensitive
     var subItemOffset: Int = 0;
     var qChar: Char = '\0'
     var handler: (Option[SourceChar] => Unit) = top
@@ -327,9 +327,9 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       var found = false
       input.map { sc =>
         if(isStringLiteralDelimiter(sc.c)) {
-          reader.unget(sc)
           found = true
-          accept(Tilde, startLine, startCol)
+          prepareForStringLiteral(sc.c, true)
+          handler = stringLiteral
         }
       }
       if(!found) matchOp(true, Includes, input)
@@ -536,7 +536,19 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
       }
       if(!more) accept(Minus, startLine, startCol)
     }
-      
+
+    def prepareForStringLiteral(delimiter: Char, precededByTilde: Boolean): Unit = {
+      qChar = delimiter
+      itemCount = 0
+      resetCapture()
+      resetTokenBuffer()
+      val openToken =
+        if(precededByTilde) TildeQuoteLiteral
+        else if(delimiter == '"') DoubleQuoteLiteral
+        else SingleQuoteLiteral
+
+      tokenBuffer.append(lexerToken(openToken, startLine, startCol))
+    }
 
     def top(input: Option[SourceChar]): Unit = {
       input.map { case sc @ SourceChar(c, line, col) =>
@@ -572,8 +584,8 @@ private class LessLexerState(reader: CharReader, makeSourcePos: (Int, Int) => Po
 
           case n if n.isDigit => { markBegin(line, col); resetCapture(); capture.append(n); handler = number }
           case ch if isStringLiteralDelimiter(ch) => {
-            qChar = ch; markBegin(line, col); itemCount = 0;
-            resetCapture(); resetTokenBuffer(); tokenBuffer.append(lexerToken(StringLiteralBegin, line, col))
+            markBegin(line, col)
+            prepareForStringLiteral(ch, false)
             handler = stringLiteral
           }
 

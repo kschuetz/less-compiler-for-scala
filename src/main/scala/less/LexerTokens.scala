@@ -41,6 +41,10 @@ object tokens {
 
   case class Colon(rightPadded: Boolean) extends Token
 
+  case object SingleQuoteLiteral extends Token
+  case object DoubleQuoteLiteral extends Token
+  case object TildeQuoteLiteral extends Token
+
   case object StringLiteralBegin extends Token
   case object StringLiteralEnd extends Token
   case class StringLiteralChunk(value: String) extends Token
