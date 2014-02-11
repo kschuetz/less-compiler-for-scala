@@ -24,13 +24,10 @@ object tokens {
   case object RBracket extends Token
   case object Semicolon extends Token
   case object Comma extends Token
-  //case object Dot extends Token
   case object DotDotDot extends Token
-  //case object Hash extends Token
   case object Bang extends Token
   case object Percent extends Token
   case object Tilde extends Token
-  //case object At extends Token
   case object Ampersand extends Token
 
   case class WholeNumber(value: BigInt) extends Token
