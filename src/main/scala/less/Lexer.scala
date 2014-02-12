@@ -3,6 +3,7 @@ package com.kschuetz.less
 import source._
 import java.io.Reader
 import scala.util.Try
+import scala.util.parsing.input.Position
 
 
 private class LessLexerState(reader: CharReader,
