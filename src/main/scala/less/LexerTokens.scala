@@ -1,63 +1,63 @@
 package com.kschuetz.less
 
 
-sealed abstract trait Token {
+sealed abstract trait TokenValue {
   def isComment: Boolean = false
 }
 
 object tokens {
-  case object Eq extends Token
-  case object Gt extends Token
-  case object Lt extends Token
-  case object GtEq extends Token
-  case object LtEq extends Token
-  case object Slash extends Token
-  case object Minus extends Token
-  case object Plus extends Token
-  case object Star extends Token
-  case object LBrace extends Token
-  case object RBrace extends Token
-  case object LParen extends Token
-  case object RParen extends Token
-  case object LBracket extends Token
-  case object RBracket extends Token
-  case object Semicolon extends Token
-  case object Comma extends Token
-  case object Colon extends Token
-  case object DotDotDot extends Token
-  case object Bang extends Token
-  case object Percent extends Token
-  case object Ampersand extends Token
+  case object Eq extends TokenValue
+  case object Gt extends TokenValue
+  case object Lt extends TokenValue
+  case object GtEq extends TokenValue
+  case object LtEq extends TokenValue
+  case object Slash extends TokenValue
+  case object Minus extends TokenValue
+  case object Plus extends TokenValue
+  case object Star extends TokenValue
+  case object LBrace extends TokenValue
+  case object RBrace extends TokenValue
+  case object LParen extends TokenValue
+  case object RParen extends TokenValue
+  case object LBracket extends TokenValue
+  case object RBracket extends TokenValue
+  case object Semicolon extends TokenValue
+  case object Comma extends TokenValue
+  case object Colon extends TokenValue
+  case object DotDotDot extends TokenValue
+  case object Bang extends TokenValue
+  case object Percent extends TokenValue
+  case object Ampersand extends TokenValue
 
-  case class WholeNumber(value: BigInt) extends Token
-  case class FloatNumber(value: String, asDouble: Double) extends Token
-  case class BlockComment(value: String) extends Token {
+  case class WholeNumber(value: BigInt) extends TokenValue
+  case class FloatNumber(value: String, asDouble: Double) extends TokenValue
+  case class BlockComment(value: String) extends TokenValue {
     override def isComment: Boolean = true
   }
-  case class InlineComment(value: String) extends Token {
+  case class InlineComment(value: String) extends TokenValue {
     override def isComment: Boolean = true
   }
 
-  case object SingleQuoteLiteral extends Token
-  case object DoubleQuoteLiteral extends Token
-  case object TildeQuoteLiteral extends Token
-  case class StringLiteralChunk(value: String) extends Token
-  case class InterpolatedIdentifier(name: String) extends Token
-  case object StringLiteralEnd extends Token
+  case object SingleQuoteLiteral extends TokenValue
+  case object DoubleQuoteLiteral extends TokenValue
+  case object TildeQuoteLiteral extends TokenValue
+  case class StringLiteralChunk(value: String) extends TokenValue
+  case class InterpolatedIdentifier(name: String) extends TokenValue
+  case object StringLiteralEnd extends TokenValue
 
 
-  case object Backslash extends Token
+  case object Backslash extends TokenValue
 
-  case object Includes extends Token
-  case object DashMatch extends Token
-  case object PrefixMatch extends Token
-  case object SuffixMatch extends Token
-  case object SubstringMatch extends Token
+  case object Includes extends TokenValue
+  case object DashMatch extends TokenValue
+  case object PrefixMatch extends TokenValue
+  case object SuffixMatch extends TokenValue
+  case object SubstringMatch extends TokenValue
 
-  case class Identifier(name: String) extends Token
-  case class DotIdentifier(name: String) extends Token
+  case class Identifier(name: String) extends TokenValue
+  case class DotIdentifier(name: String) extends TokenValue
 
-  case class HashIdentifier(name: String) extends Token {
+  case class HashIdentifier(name: String) extends TokenValue {
     val asHexString: Option[String] = {
       if(name.forall { c => c.isDigit || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')}) {
         Some(name.toLowerCase)
@@ -66,12 +66,12 @@ object tokens {
     val isValidColorHex = ((name.length == 3) || (name.length == 6)) && asHexString.isDefined
   }
 
-  case class AtIdentifier(name: String) extends Token
-  case class AtAtIdentifier(name: String) extends Token
-  case class AtBraceIdentifier(name: String) extends Token
-  case class DotAtBraceIdentifier(name: String) extends Token
+  case class AtIdentifier(name: String) extends TokenValue
+  case class AtAtIdentifier(name: String) extends TokenValue
+  case class AtBraceIdentifier(name: String) extends TokenValue
+  case class DotAtBraceIdentifier(name: String) extends TokenValue
 
-  case class Unknown(value: String) extends Token
+  case class Unknown(value: String) extends TokenValue
 
 }
 
