@@ -11,7 +11,7 @@ object RunCompiler {
     var hasErrors = false
     items.foreach { maybeToken =>
       maybeToken match {
-        case e if e.value.isError => {
+        case e if e.isError => {
           hasErrors = true
           println("error:" + e.toString)
         }

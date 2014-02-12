@@ -10,10 +10,12 @@ case class TokenContext(position: Position,
                         immediatelyFollowsComment: Boolean = false) {   // token occurs _immediately_ after the end of a block comment, with no whitespace between)
 
   def isAtLineBegin: Boolean =
-    position.columnNumber == 1
+    position.column == 1
 }
 
 case class Token(value: TokenValue, context: TokenContext) {
+
+  def isError: Boolean = value.isError
 
   override def toString = {
     val wFlag = if(context.followsWhitespace) "w" else ""
