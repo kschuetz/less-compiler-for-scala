@@ -12,7 +12,7 @@ private class LessLexerState(reader: CharReader,
   sealed abstract trait TokenResult
   case class Success(token: Token) extends TokenResult
   case class SuccessMany(tokens: Vector[Token]) extends TokenResult
-  case class Failure(error: LexerError) extends TokenResult
+  case class Failure(error: Token) extends TokenResult
   case object NothingLeft extends TokenResult
 
 
@@ -105,15 +105,15 @@ private class LessLexerState(reader: CharReader,
     }
 
     def error(msg: String, line: Int, col: Int): Unit = {
-      val e = ParseError(msg, makeSourcePos(line, col))
-      result = Failure(e)
+      val e = LexerError(msg)
+      result = Failure(makeToken(e, line, col))
       done = true
     }
 
     def error(msg: String, sourceChar: Option[SourceChar]): Unit = {
       val (line, col) = toLineCol(sourceChar)
-      val e = ParseError(msg, makeSourcePos(line, col))
-      result = Failure(e)
+      val e = LexerError(msg)
+      result = Failure(makeToken(e, line, col))
       done = true
     }
 
@@ -668,19 +668,19 @@ private class LessLexerState(reader: CharReader,
   }
 
 
-  def next: Stream[Either[LexerError, Token]] = {
+  def next: Stream[Token] = {
     scan match {
       case Success(t) => {
-        Right(t) #:: (new LessLexerState(reader, makeSourcePos, Some(t.value))).next
+        t #:: (new LessLexerState(reader, makeSourcePos, Some(t.value))).next
       }
       case SuccessMany(ts) => {
         val lastToken = ts.lastOption.map { _.value }
         val nextState = (new LessLexerState(reader, makeSourcePos, lastToken)).next
-        ts.foldRight(nextState){ Right(_) #:: _ }
+        ts.foldRight(nextState){ _ #:: _ }
       }
       case Failure(e) => {
         reader.close()
-        Left(e) #:: Stream.empty
+        e #:: Stream.empty
       }
       case NothingLeft => {
         reader.close()
@@ -693,7 +693,7 @@ private class LessLexerState(reader: CharReader,
 
 object LessLexer extends Lexer {
 
-  def apply(reader: Reader, makeSourcePos: (Int, Int) => Position): Stream[Either[LexerError, Token]] = {
+  def apply(reader: Reader, makeSourcePos: (Int, Int) => Position): Stream[Token] = {
     val charReader = new CharReader(reader, 1, 1) with Markable
     (new LessLexerState(charReader, makeSourcePos, None)).next
   }

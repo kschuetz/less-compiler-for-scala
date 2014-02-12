@@ -3,8 +3,8 @@ package com.kschuetz.less
 import source._
 import java.io.Reader
 
-sealed abstract trait LexerError
-abstract trait PositionedLexerError extends LexerError {
+sealed abstract trait LexerError_Old
+abstract trait PositionedLexerError extends LexerError_Old {
   def position: Position
 }
 
@@ -31,5 +31,5 @@ case class Token(value: TokenValue, context: TokenContext) {
 
 
 
-trait Lexer extends ((Reader, (Int, Int) => Position) => Stream[Either[LexerError, Token]])
+trait Lexer extends ((Reader, (Int, Int) => Position) => Stream[Token])
 

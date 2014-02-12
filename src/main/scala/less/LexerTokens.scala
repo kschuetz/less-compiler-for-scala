@@ -3,6 +3,12 @@ package com.kschuetz.less
 
 sealed abstract trait TokenValue {
   def isComment: Boolean = false
+  def isError: Boolean = false
+}
+
+sealed trait ErrorTokenValue extends TokenValue {
+  val message: String
+  override def isError = true
 }
 
 object tokens {
@@ -72,6 +78,11 @@ object tokens {
   case class DotAtBraceIdentifier(name: String) extends TokenValue
 
   case class Unknown(value: String) extends TokenValue
+
+  // error tokens
+
+
+  case class LexerError(message: String) extends ErrorTokenValue
 
 }
 

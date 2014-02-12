@@ -11,7 +11,11 @@ object RunCompiler {
     var hasErrors = false
     items.foreach { maybeToken =>
       maybeToken match {
-        case Right(t) => {
+        case e if e.value.isError => {
+          hasErrors = true
+          println("error:" + e.toString)
+        }
+        case t => {
           val doPrint = t.value match {
             case tokens.Unknown(_) => true
             case _ => true
@@ -20,10 +24,7 @@ object RunCompiler {
             println(t.toString)
           }
         }
-        case Left(e) => {
-          hasErrors = true
-          println("error:" + e.toString)
-        }
+
       }
 
     }
