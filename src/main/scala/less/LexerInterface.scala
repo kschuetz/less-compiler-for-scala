@@ -3,12 +3,6 @@ package com.kschuetz.less
 import source._
 import java.io.Reader
 
-sealed abstract trait LexerError_Old
-abstract trait PositionedLexerError extends LexerError_Old {
-  def position: Position
-}
-
-case class ParseError(message: String, position: Position) extends PositionedLexerError
 
 case class TokenContext(position: Position,
                         followsWhitespace: Boolean = false,   // some type of whitespace (spaces, tabs, newlines, or comments) has occurred since last token
