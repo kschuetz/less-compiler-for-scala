@@ -14,3 +14,13 @@ class TokenStreamReader(source: Stream[Token]) extends Reader[Token] {
   def atEnd: Boolean = source.isEmpty
 
 }
+
+object TokenStreamReader {
+
+  def apply(source: Stream[Token], skipComments: Boolean): TokenStreamReader = {
+    val tokenStream = if(skipComments) source.filter(!_.value.isComment) else source
+    new TokenStreamReader(tokenStream)
+
+  }
+
+}
