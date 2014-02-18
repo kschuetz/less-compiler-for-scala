@@ -51,6 +51,8 @@ object tokens {
   case class InterpolatedIdentifier(name: String) extends TokenValue
   case object StringLiteralEnd extends TokenValue
 
+  case class UnquotedString(value: String) extends TokenValue
+
 
   case object Backslash extends TokenValue
 
@@ -77,12 +79,18 @@ object tokens {
   case class AtBraceIdentifier(name: String) extends TokenValue
   case class DotAtBraceIdentifier(name: String) extends TokenValue
 
+  case object Url extends TokenValue
+  case object BadUrl extends TokenValue
+
   case class Unknown(value: String) extends TokenValue
+
+
 
   // error tokens
 
 
   case class LexerError(message: String) extends ErrorTokenValue
+
 
 }
 

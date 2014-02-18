@@ -42,6 +42,12 @@ private class LessLexerState(reader: CharReader,
   def isStringLiteralDelimiter(c: Char) =
     (c == '\'') || (c == '"')
 
+  def isNonPrintable(c: Char) = {
+    val n = c.toInt
+    (n >= 0 && n <= 8) || (n == 11) || (n >= 14 && n <= 31) || (n == 127)
+  }
+
+
   /**
    * Extracts line and col from a Some(SourceChar), or
    * from the reader position if None (which will point to the
@@ -84,9 +90,9 @@ private class LessLexerState(reader: CharReader,
         immediatelyFollowsComment))
     }
 
-    def makeToken(token: TokenValue, sourceChar: Option[SourceChar]): Token = {
+    def makeToken(token: TokenValue, sourceChar: Option[SourceChar], firstInSequence: Boolean): Token = {
       val (line, col) = toLineCol(sourceChar)
-      makeToken(token, line, col)
+      makeToken(token, line, col, firstInSequence)
     }
 
     def accept(token: TokenValue, line: Int, col: Int): Unit = {
@@ -584,6 +590,75 @@ private class LessLexerState(reader: CharReader,
       }
     }
 
+    def urlSymbol(input: Option[SourceChar]): Unit = {
+      if(!input.isDefined) {
+        identifier(input)
+      } else input.foreach { sc =>
+          if(subState == 0 && (sc.c == 'r')) { capture.append(sc.c); subState = 1 }
+          else if (subState == 1 && (sc.c == 'l')) { capture.append(sc.c); subState = 2 }
+          else if (subState == 2 && (sc.c.isWhitespace)) { /* do nothing */ }
+          else if (subState == 2 && (sc.c == '(')) { resetCapture(); subState = 0; handler = urlValue1 }
+          else { reader.unget(sc); handler = identifier }
+      }
+    }
+
+    def urlValue1(input: Option[SourceChar]): Unit = {
+      if(!input.isDefined) {
+        accept(Url, startLine, startCol)
+      } else input.foreach { sc =>
+        if(isStringLiteralDelimiter(sc.c)) {
+          reader.unget(sc)
+          accept(Url, startLine, startCol)          
+        } else if (sc.c == ')') {
+          val tokens = Vector(makeToken(Url, startLine, startCol, true),
+                              makeToken(RParen, input, false))
+          acceptMany(tokens)
+        } else if(sc.c.isWhitespace) {
+          /* do nothing */  
+        } else {
+          // unquoted string in URL
+          resetTokenBuffer()
+          tokenBuffer += makeToken(Url, startLine, startCol, true)
+          resetCapture()
+          capture.append(sc.c)
+          markBegin(sc.line, sc.col)
+          handler = urlUnquoted
+        }
+
+      }
+    }
+
+    def urlUnquoted(input: Option[SourceChar]): Unit = {
+      var ok = true
+      var more = false
+      input.foreach { sc =>
+        sc.c match {
+          case ')' => { reader.unget(sc) }
+          case '\\' => {
+            capture.append('\\')
+            reader.get.map { c2 =>
+              if(c2.c == ')') { reader.unget(c2) }
+              else { capture.append(c2.c); more = true }
+            }
+          }
+          case '(' => ok = false
+          case '"' => ok = false
+          case '\'' => ok = false
+          case ch if isNonPrintable(ch) => ok = false
+          case ch => {
+            capture.append(ch)
+            more = true
+          }
+        }
+      }
+      if(!ok) error("Illegal character in unquoted URL", input)
+      else if (!more) {
+        val s = capture.result
+        tokenBuffer += makeToken(UnquotedString(s), startLine, startCol, false)
+        acceptMany(tokenBuffer.toVector)
+      }
+    }
+
     def dash1(input: Option[SourceChar]): Unit = {
       var more = false
       input.foreach { sc =>
@@ -609,6 +684,7 @@ private class LessLexerState(reader: CharReader,
     def top(input: Option[SourceChar]): Unit = {
       input.map { case sc @ SourceChar(c, line, col) =>
         c match {
+          case 'u' => { markBegin(line, col); resetCapture(); capture.append(c); subState = 0; handler = urlSymbol }
           case ch if isValidIdentStartChar(c) => { markBegin(line, col); resetCapture(); capture.append(ch); handler = identifier }
           case '@' => { markBegin(line, col); subState = 0; handler = at1 }
           case '-' => { markBegin(line, col); handler = dash1 }
