@@ -99,11 +99,15 @@ object syntax {
   }
 
 
-  sealed abstract trait NumberValue
-  case class WholeNumber(value: BigInt) extends NumberValue
-  case class FractionalNumber(value: Double, sourceRepr: String) extends NumberValue
+  sealed abstract trait NumericValue
+  sealed abstract trait NumericConstant
+  sealed abstract trait NumericLiteral
+  sealed abstract trait NumericDimension
 
+  case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with NumericDimension
+  case class FractionalNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with NumericDimension
 
-  case class DimensionValue(number: NumberValue, units: DimensionUnit)
+  case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with NumericDimension
+  case class Percentage(value: NumericConstant) extends NumericValue with NumericDimension
 
 }
