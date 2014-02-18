@@ -649,6 +649,7 @@ private class LessLexerState(reader: CharReader,
       input.foreach { sc =>
         sc.c match {
           case ')' => { reader.unget(sc) }
+          case ch if ch.isWhitespace =>  { reader.unget(sc) }
           case '\\' => {
             capture.append('\\')
             reader.get.map { c2 =>
