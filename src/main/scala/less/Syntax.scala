@@ -27,5 +27,9 @@ object syntax {
   sealed abstract trait Directive
   case class ImportDirective(value: StringLiteral)
 
+  sealed abstract trait UrlExpression
+  case class UrlQuoted(value: StringLiteral) extends UrlExpression
+  case class UrlUnquoted(value: String) extends UrlExpression
+
 
 }

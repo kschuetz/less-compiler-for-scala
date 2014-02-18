@@ -41,6 +41,20 @@ trait LessParsers extends Parsers {
       { case q ~ chunks => syntax.StringLiteral(q, chunks) }
 
 
+  val urlExpressionOpen = token("url(", Url)
+
+  val urlExpressionValue: Parser[syntax.UrlExpression] =
+    (stringLiteral ^^ { case s => syntax.UrlQuoted(s) }) |
+    accept("url", {
+      case Token(UnquotedString(s), _) => syntax.UrlUnquoted(s)
+    })
+
+
+  val urlExpression: Parser[syntax.UrlExpression] =
+    (urlExpressionOpen ~> urlExpressionValue <~ token(")", RParen))
+
+
+
   def atIdent(name: String): Parser[String] =
     accept(s"@${name}", {
       case Token(AtIdentifier(s), _) if s == name => name
