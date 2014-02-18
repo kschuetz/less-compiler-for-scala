@@ -93,8 +93,16 @@ object syntax {
       knownUnits.map(unit => (unit.name -> unit)) ++  Seq("hz" -> HzUnit, "khz" -> KHzUnit)
     }.toMap
 
-    def byName(name: String): DimensionUnit =
-      unitNameMap.getOrElse(name, UnknownUnit(name))
+    def byName(name: String): Option[DimensionUnit] = {
+      if(name.nonEmpty) {
+        val c = name.charAt(0)
+        if(c.isDigit && c.isLower) {
+          unitNameMap.get(name).orElse(Some(UnknownUnit(name)))
+        } else {
+          None
+        }
+      } else None
+    }
 
   }
 
@@ -102,12 +110,12 @@ object syntax {
   sealed abstract trait NumericValue
   sealed abstract trait NumericConstant
   sealed abstract trait NumericLiteral
-  sealed abstract trait TypedNumber
+  sealed abstract trait TypedNumericValue
 
-  case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with TypedNumber
-  case class RealNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with TypedNumber
+  case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
+  case class RealNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
 
-  case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with TypedNumber
-  case class Percentage(value: NumericConstant) extends NumericValue with TypedNumber
+  case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with TypedNumericValue
+  case class Percentage(value: NumericConstant) extends NumericValue with TypedNumericValue
 
 }

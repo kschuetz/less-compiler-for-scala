@@ -60,6 +60,31 @@ trait LessParsers extends Parsers {
       case Token(tokens.RealNumber(s, n), _) => syntax.RealNumber(n, s)
     })
 
+
+
+
+
+         /*
+  val dimensionSuffix: Parser[syntax.DimensionUnit] = {
+    def extract(token: Token): Option[DimensionUnit] = {
+      token match {
+        case Token(Identifier(s), context) if !context.followsWhitespace =>
+          syntax.DimensionUnit.byName(s)
+        case _ => None
+      }
+    }
+
+
+  }
+    accept("dimension", {
+      //case Token(Identifier(s), context) if !context.followsWhitespace &&
+    })
+        */
+
+  /*val typedNumericValue: Parser[syntax.TypedNumericValue] =
+    numericConstant ~
+  */
+
   def atIdent(name: String): Parser[String] =
     accept(s"@${name}", {
       case Token(AtIdentifier(s), _) if s == name => name
