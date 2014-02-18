@@ -606,9 +606,20 @@ private class LessLexerState(reader: CharReader,
       if(!input.isDefined) {
         accept(Url, startLine, startCol)
       } else input.foreach { sc =>
+        var beginUnquoted = false
         if(isStringLiteralDelimiter(sc.c)) {
           reader.unget(sc)
-          accept(Url, startLine, startCol)          
+          accept(Url, startLine, startCol)
+        } else if (sc.c == '~') {
+          beginUnquoted = true
+          reader.get.foreach { c2 =>
+            if(isStringLiteralDelimiter(c2.c)) {
+              reader.unget(c2)
+              reader.unget(sc)
+              beginUnquoted = false
+              accept(Url, startLine, startCol)
+            }
+          }
         } else if (sc.c == ')') {
           val tokens = Vector(makeToken(Url, startLine, startCol, true),
                               makeToken(RParen, input, false))
@@ -616,11 +627,15 @@ private class LessLexerState(reader: CharReader,
         } else if(sc.c.isWhitespace) {
           /* do nothing */  
         } else {
+          beginUnquoted = true
+        }
+
+        if(beginUnquoted) {
           // unquoted string in URL
           resetTokenBuffer()
           tokenBuffer += makeToken(Url, startLine, startCol, true)
+          reader.unget(sc)
           resetCapture()
-          capture.append(sc.c)
           markBegin(sc.line, sc.col)
           handler = urlUnquoted
         }
