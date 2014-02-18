@@ -102,12 +102,12 @@ object syntax {
   sealed abstract trait NumericValue
   sealed abstract trait NumericConstant
   sealed abstract trait NumericLiteral
-  sealed abstract trait NumericDimension
+  sealed abstract trait TypedNumber
 
-  case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with NumericDimension
-  case class FractionalNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with NumericDimension
+  case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with TypedNumber
+  case class RealNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with TypedNumber
 
-  case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with NumericDimension
-  case class Percentage(value: NumericConstant) extends NumericValue with NumericDimension
+  case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with TypedNumber
+  case class Percentage(value: NumericConstant) extends NumericValue with TypedNumber
 
 }

@@ -54,6 +54,11 @@ trait LessParsers extends Parsers {
     (urlExpressionOpen ~> urlExpressionValue <~ token(")", RParen))
 
 
+  val numericConstant: Parser[syntax.NumericConstant] =
+    accept("number", {
+      case Token(tokens.WholeNumber(n), _) => syntax.WholeNumber(n)
+      case Token(tokens.RealNumber(s, n), _) => syntax.RealNumber(n, s)
+    })
 
   def atIdent(name: String): Parser[String] =
     accept(s"@${name}", {

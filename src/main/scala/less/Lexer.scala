@@ -490,7 +490,7 @@ private class LessLexerState(reader: CharReader,
       if(!more) {
         val s = capture.result()
         Try(s.toDouble).toOption match {
-          case Some(d) => accept(FloatNumber(s, d), startLine, startCol)
+          case Some(d) => accept(RealNumber(s, d), startLine, startCol)
           case _ => error("Could not parse floating point number", startLine, startCol)
         }
       }

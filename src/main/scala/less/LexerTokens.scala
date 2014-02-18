@@ -36,7 +36,7 @@ object tokens {
   case object Ampersand extends TokenValue
 
   case class WholeNumber(value: BigInt) extends TokenValue
-  case class FloatNumber(value: String, asDouble: Double) extends TokenValue
+  case class RealNumber(value: String, asDouble: Double) extends TokenValue
   case class BlockComment(value: String) extends TokenValue {
     override def isComment: Boolean = true
   }
