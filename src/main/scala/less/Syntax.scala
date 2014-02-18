@@ -33,6 +33,7 @@ object syntax {
 
   sealed abstract trait DimensionUnit {
     def name: String
+    def isKnown: Boolean = true
   }
 
   sealed abstract trait LengthUnit extends DimensionUnit
@@ -76,7 +77,26 @@ object syntax {
   case object DpcmUnit extends ResolutionUnit { val name = "dpcm" }
   case object DppxUnit extends ResolutionUnit { val name = "dppx" }
 
-  case class UnknownUnit(name: String) extends DimensionUnit
+  case class UnknownUnit(name: String) extends DimensionUnit {
+    override def isKnown: Boolean = false
+  }
+
+  object DimensionUnit {
+    val knownUnits = Set(EmUnit, RemUnit, ExUnit, ChUnit, VwUnit, VhUnit, VminUnit, VmaxUnit,
+                            PxUnit, CmUnit, MmUnit, InUnit, PtUnit, PcUnit,
+                            DegUnit, GradUnit, RadUnit, TurnUnit,
+                            SUnit, MsUnit,
+                            HzUnit, KHzUnit,
+                            DpiUnit, DpcmUnit, DppxUnit)
+
+    val unitNameMap = {
+      knownUnits.map(unit => (unit.name -> unit)) ++  Seq("hz" -> HzUnit, "khz" -> KHzUnit)
+    }.toMap
+
+    def byName(name: String): DimensionUnit =
+      unitNameMap.getOrElse(name, UnknownUnit(name))
+
+  }
 
 
   sealed abstract trait NumberValue
