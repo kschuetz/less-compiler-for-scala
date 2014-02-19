@@ -4,7 +4,9 @@ object syntax {
 
 
 
-  sealed abstract trait VarRef {
+  sealed abstract trait Factor
+
+  sealed abstract trait VarRef extends Factor {
     def varName: String
   }
 
@@ -112,10 +114,10 @@ object syntax {
   }
 
 
-  sealed abstract trait NumericValue
-  sealed abstract trait NumericConstant
-  sealed abstract trait NumericLiteral
-  sealed abstract trait TypedNumericValue
+  sealed abstract trait NumericValue extends Factor
+  sealed abstract trait NumericConstant extends Factor
+  sealed abstract trait NumericLiteral extends Factor
+  sealed abstract trait TypedNumericValue extends Factor
 
   case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
   case class RealNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
@@ -132,5 +134,35 @@ object syntax {
 
 
   }
+
+
+
+
+
+  sealed abstract trait Expr extends Factor
+
+  sealed abstract trait Term
+
+
+
+
+
+  case class Add(x: Term, y: Term) extends Expr
+  case class Subtract(x: Term, y: Term) extends Expr
+  case class Multiply(x: Factor, y: Factor) extends Term
+  case class Divide(x: Factor, y: Factor) extends Term
+
+
+  object Factor {
+    def apply(item: Any): Factor =
+      item match {
+        case n: TypedNumericValue => n
+        case r: VarRef => r
+      }
+  }
+
+  case class ComponentValue(first: Expr, rest: List[Expr] = Nil)
+
+  case class Arguments(values: Seq[ComponentValue])
 
 }
