@@ -118,4 +118,14 @@ object syntax {
   case class Dimension(value: NumericConstant, units: DimensionUnit) extends NumericValue with TypedNumericValue
   case class Percentage(value: NumericConstant) extends NumericValue with TypedNumericValue
 
+  object TypedNumericValue {
+    def apply(nc: NumericConstant): TypedNumericValue =
+      nc match {
+        case n: WholeNumber => n
+        case n: RealNumber => n
+      }
+
+
+  }
+
 }

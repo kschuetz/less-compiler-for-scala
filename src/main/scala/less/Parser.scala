@@ -62,26 +62,45 @@ trait LessParsers extends Parsers {
 
 
 
+  sealed abstract trait NumberSuffix
+  case object PercentSuffix extends NumberSuffix
+  case class DimensionSuffix(units: syntax.DimensionUnit) extends NumberSuffix
 
-  object DimensionSuffix {
-    def unapply(token: Token): Option[syntax.DimensionUnit] = {
+  object ExtractPercentSuffix {
+    def unapply(token: Token): Option[NumberSuffix] = {
+      token match {
+        case Token(Percent, context) if !context.followsWhitespace => Some(PercentSuffix)
+        case _ => None
+      }
+    }
+  }
+
+  object ExtractDimensionSuffix {
+    def unapply(token: Token): Option[NumberSuffix] = {
       token match {
         case Token(Identifier(s), context) if !context.followsWhitespace =>
-          syntax.DimensionUnit.byName(s)
+          syntax.DimensionUnit.byName(s).map(DimensionSuffix(_))
         case _=> None
       }
     }
   }
 
-  val dimensionSuffix: Parser[syntax.DimensionUnit] =
-    accept("dimension", {
-      case DimensionSuffix(units) => units
+  val numberSuffix: Parser[NumberSuffix] =
+    accept("number suffix", {
+      case ExtractDimensionSuffix(ds) => ds
+      case ExtractPercentSuffix(ps) => ps
     })
 
 
-  /*val typedNumericValue: Parser[syntax.TypedNumericValue] =
-    numericConstant ~
-  */
+
+  val typedNumericValue: Parser[syntax.TypedNumericValue] =
+     numericConstant ~ opt(numberSuffix) ^^ {
+       case n ~ Some(DimensionSuffix(units)) => syntax.Dimension(n, units)
+       case n ~ Some(PercentSuffix) => Percentage(n)
+       case n ~ _ => syntax.TypedNumericValue(n)
+     }
+
+
 
   def atIdent(name: String): Parser[String] =
     accept(s"@${name}", {
