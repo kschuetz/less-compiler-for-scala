@@ -107,6 +107,12 @@ trait LessParsers extends Parsers {
       case Token(AtIdentifier(s), _) if s == name => name
     })
 
+  val varRef: Parser[syntax.VarRef] =
+    accept(s"variable reference", {
+      case Token(AtIdentifier(name), _) => syntax.DirectVarRef(name)
+      case Token(AtAtIdentifier(name), _) => syntax.IndirectVarRef(syntax.DirectVarRef(name))
+    })
+
 
   val importDirective: Parser[syntax.ImportDirective] =
     (atIdent("import") ~> stringLiteral <~ semicolon) ^^
