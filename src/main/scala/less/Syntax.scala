@@ -12,8 +12,13 @@ object syntax {
 
   sealed abstract trait StringValue
   case class StringConstant(value: String) extends StringValue
-  case class StringVarRef(varName: String) extends StringValue with VarRef
-
+  
+  
+  
+  case class DirectVarRef(varName: String) extends VarRef with StringValue
+  case class IndirectVarRef(ref: VarRef) extends VarRef {
+    def varName = ref.varName
+  }
 
   sealed abstract trait QuoteDelimiter
   case object DoubleQuoteDelimiter extends QuoteDelimiter

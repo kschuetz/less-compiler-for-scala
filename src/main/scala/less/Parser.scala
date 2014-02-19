@@ -31,7 +31,7 @@ trait LessParsers extends Parsers {
   val stringLiteralChunk: Parser[syntax.StringValue] =
     accept("string literal", {
       case Token(StringLiteralChunk(s), _) => syntax.StringConstant(s)
-      case Token(InterpolatedIdentifier(ident), _) => syntax.StringVarRef(ident)
+      case Token(InterpolatedIdentifier(ident), _) => syntax.DirectVarRef(ident)
     })
 
   val stringLiteralClose = token("closing quote", StringLiteralEnd)
