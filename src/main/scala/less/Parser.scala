@@ -63,23 +63,21 @@ trait LessParsers extends Parsers {
 
 
 
-
-         /*
-  val dimensionSuffix: Parser[syntax.DimensionUnit] = {
-    def extract(token: Token): Option[DimensionUnit] = {
+  object DimensionSuffix {
+    def unapply(token: Token): Option[syntax.DimensionUnit] = {
       token match {
         case Token(Identifier(s), context) if !context.followsWhitespace =>
           syntax.DimensionUnit.byName(s)
-        case _ => None
+        case _=> None
       }
     }
-
-
   }
+
+  val dimensionSuffix: Parser[syntax.DimensionUnit] =
     accept("dimension", {
-      //case Token(Identifier(s), context) if !context.followsWhitespace &&
+      case DimensionSuffix(units) => units
     })
-        */
+
 
   /*val typedNumericValue: Parser[syntax.TypedNumericValue] =
     numericConstant ~
