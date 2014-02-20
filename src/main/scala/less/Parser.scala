@@ -21,6 +21,9 @@ trait LessParsers extends Parsers {
 
 
   val semicolon = token(";", Semicolon)
+  val lParen = token("(", LParen)
+  val rParen = token(")", RParen)
+  val comma = token(",", Comma)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -139,8 +142,7 @@ trait LessParsers extends Parsers {
     })
 
 
-  val lParen = token("(", LParen)
-  val rParen = token(")", RParen)
+
 
   val factor: Parser[Expr] =
     typedNumericValue |
@@ -180,6 +182,23 @@ trait LessParsers extends Parsers {
       case cvl => Argument(None, Some(cvl))
     }
 
-  val functionApplication: Parser[FunctionApplication] = ???
+  val moreArguments: Parser[List[Argument]] = {
+    rep(comma ~ opt(argument) ^^ {
+      case _ ~ Some(arg) => arg
+      case _ ~ None => Argument(None, None)
+    })
+  }
+
+  val argumentList: Parser[List[Argument]] = {
+    (argument ~ moreArguments) ^^ {
+      case x ~ xs => x :: xs
+    } | moreArguments
+  }
+
+  //val argumentList: Parser[Seq[Argument]] =
+
+
+  //val functionApplication: Parser[FunctionApplication] =
+
 
 }
