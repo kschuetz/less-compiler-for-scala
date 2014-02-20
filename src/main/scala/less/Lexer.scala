@@ -7,7 +7,7 @@ import scala.util.parsing.input.Position
 
 
 private class LessLexerState(reader: CharReader,
-                             makeSourcePos: (Int, Int) => Position,
+                             makePosition: (Int, Int) => Position,
                              prevToken: Option[TokenValue]) {
 
   sealed abstract trait TokenResult
@@ -84,7 +84,7 @@ private class LessLexerState(reader: CharReader,
       val immediatelyFollowsComment = firstInSequence && (!(whitespaceEncountered || newLineEncountered) && (prevToken.map(_.isComment).getOrElse(false)))
 
       Token(token,
-        TokenContext(makeSourcePos(line, col),
+        TokenContext(makePosition(line, col),
         followsWhitespace,
         newLineEncountered && firstInSequence,
         immediatelyFollowsComment))
@@ -764,11 +764,11 @@ private class LessLexerState(reader: CharReader,
   def next: Stream[Token] = {
     scan match {
       case Success(t) => {
-        t #:: (new LessLexerState(reader, makeSourcePos, Some(t.value))).next
+        t #:: (new LessLexerState(reader, makePosition, Some(t.value))).next
       }
       case SuccessMany(ts) => {
         val lastToken = ts.lastOption.map { _.value }
-        val nextState = (new LessLexerState(reader, makeSourcePos, lastToken)).next
+        val nextState = (new LessLexerState(reader, makePosition, lastToken)).next
         ts.foldRight(nextState){ _ #:: _ }
       }
       case Failure(e) => {
@@ -786,9 +786,9 @@ private class LessLexerState(reader: CharReader,
 
 object LessLexer extends Lexer {
 
-  def apply(reader: Reader, makeSourcePos: (Int, Int) => Position): Stream[Token] = {
+  def apply(reader: Reader, makePosition: (Int, Int) => Position): Stream[Token] = {
     val charReader = new CharReader(reader, 1, 1) with Markable
-    (new LessLexerState(charReader, makeSourcePos, None)).next
+    (new LessLexerState(charReader, makePosition, None)).next
   }
 
 }
