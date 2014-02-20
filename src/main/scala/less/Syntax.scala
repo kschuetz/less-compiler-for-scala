@@ -147,10 +147,10 @@ object syntax {
 
 
 
-  case class Add(x: Term, y: Term) extends Expr
-  case class Subtract(x: Term, y: Term) extends Expr
-  case class Multiply(x: Factor, y: Factor) extends Term
-  case class Divide(x: Factor, y: Factor) extends Term
+  case class Add(x: Expr, y: Expr) extends Expr
+  case class Subtract(x: Expr, y: Expr) extends Expr
+  case class Multiply(x: Expr, y: Expr) extends Expr
+  case class Divide(x: Expr, y: Expr) extends Expr
 
 
   object Factor {

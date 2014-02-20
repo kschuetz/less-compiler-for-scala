@@ -120,4 +120,21 @@ trait LessParsers extends Parsers {
 
 
 
+  val add = syntax.Add.apply _
+  val subtract = syntax.Subtract.apply _
+  val multiply = syntax.Multiply.apply _
+  val divide = syntax.Divide.apply _
+
+  val addOp: Parser[(Expr, Expr) => Expr] =
+    accept("add op", {
+      case Token(Plus, _) => add
+      case Token(Minus, _) => subtract
+    })
+
+  val mulOp: Parser[(Expr, Expr) => Expr] =
+    accept("mul op", {
+      case Token(Star, _) => multiply
+      case Token(Slash, _) => divide
+    })
+
 }
