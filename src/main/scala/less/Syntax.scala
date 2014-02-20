@@ -163,6 +163,13 @@ object syntax {
 
   case class ComponentValueList(first: ComponentValue, rest: List[ComponentValue] = Nil)
 
+
+  case class Argument(name: Option[String],
+                      value: Option[ComponentValueList])
+
+  case class FunctionApplication(name: String,
+                                 arguments: Seq[Argument])
+
   case class Arguments(values: Seq[ComponentValue])
 
 }

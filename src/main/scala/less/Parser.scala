@@ -138,10 +138,14 @@ trait LessParsers extends Parsers {
       case Token(Slash, _) => divide
     })
 
+
+  val lParen = token("(", LParen)
+  val rParen = token(")", RParen)
+
   val factor: Parser[Expr] =
     typedNumericValue |
     varRef |
-    token("(", LParen) ~> expr <~ token(")", RParen)
+    lParen ~> expr <~ rParen
 
   val term: Parser[Expr] =
     chainl1(factor, mulOp)
@@ -149,10 +153,13 @@ trait LessParsers extends Parsers {
   val expr: Parser[Expr] =
     chainl1(term, addOp)
 
-  val bareIdentifier: Parser[syntax.BareIdentifier] =
+  val identifier: Parser[String] =
     accept("identifier", {
-      case Token(Identifier(name), _) => syntax.BareIdentifier(name)
+      case Token(Identifier(name), _) => name
     })
+
+  val bareIdentifier: Parser[syntax.BareIdentifier] =
+    identifier ^^ { case name => syntax.BareIdentifier(name) }
 
   val componentValue: Parser[ComponentValue] =
     expr |
@@ -160,5 +167,19 @@ trait LessParsers extends Parsers {
     urlExpression |
     bareIdentifier
 
+  val componentValueList: Parser[ComponentValueList] =
+    componentValue ~ rep(componentValue) ^^ {
+      case x ~ xs => ComponentValueList(x, xs)
+    }
+
+  val argument: Parser[Argument] =
+    (identifier ~ token("=", Eq) ~ opt(componentValueList)) ^^ {
+      case ident ~ _ ~ cvl => Argument(Some(ident), cvl)
+    } |
+    componentValueList ^^ {
+      case cvl => Argument(None, Some(cvl))
+    }
+
+  val functionApplication: Parser[FunctionApplication] = ???
 
 }
