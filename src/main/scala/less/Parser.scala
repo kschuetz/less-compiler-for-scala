@@ -120,6 +120,7 @@ trait LessParsers extends Parsers {
 
 
 
+
   val add = syntax.Add.apply _
   val subtract = syntax.Subtract.apply _
   val multiply = syntax.Multiply.apply _
@@ -147,5 +148,17 @@ trait LessParsers extends Parsers {
 
   val expr: Parser[Expr] =
     chainl1(term, addOp)
+
+  val bareIdentifier: Parser[syntax.BareIdentifier] =
+    accept("identifier", {
+      case Token(Identifier(name), _) => syntax.BareIdentifier(name)
+    })
+
+  val componentValue: Parser[ComponentValue] =
+    expr |
+    stringLiteral |
+    urlExpression |
+    bareIdentifier
+
 
 }

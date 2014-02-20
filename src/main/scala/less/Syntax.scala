@@ -2,8 +2,11 @@ package com.kschuetz.less
 
 object syntax {
 
-  sealed abstract trait Expr
+  sealed abstract trait ComponentValue
 
+  sealed abstract trait Expr extends ComponentValue
+
+  case class BareIdentifier(name: String) extends ComponentValue
 
   sealed abstract trait VarRef extends Expr {
     def varName: String
@@ -27,13 +30,13 @@ object syntax {
   case object TildeQuoteDelimiter extends QuoteDelimiter
 
   case class StringLiteral(delimiter: QuoteDelimiter,
-                           chunks: Seq[StringValue])
+                           chunks: Seq[StringValue]) extends ComponentValue
 
 
   sealed abstract trait Directive
   case class ImportDirective(value: StringLiteral)
 
-  sealed abstract trait UrlExpression
+  sealed abstract trait UrlExpression extends ComponentValue
   case class UrlQuoted(value: StringLiteral) extends UrlExpression
   case class UrlUnquoted(value: String) extends UrlExpression
 
@@ -137,7 +140,7 @@ object syntax {
 
 
 
-
+      /*
   object Expr {
     def apply(item: Any): Expr =
       item match {
@@ -145,12 +148,7 @@ object syntax {
         case r: VarRef => r
       }
   }
-
-
-
-
-
-
+       */
 
   case class Add(x: Expr, y: Expr) extends Expr
   case class Subtract(x: Expr, y: Expr) extends Expr
@@ -158,8 +156,12 @@ object syntax {
   case class Divide(x: Expr, y: Expr) extends Expr
 
 
+  object ComponentValue {
+    //def apply(item: Any): ComponentValue
+  }
 
-  case class ComponentValue(first: Expr, rest: List[Expr] = Nil)
+
+  case class ComponentValueList(first: ComponentValue, rest: List[ComponentValue] = Nil)
 
   case class Arguments(values: Seq[ComponentValue])
 
