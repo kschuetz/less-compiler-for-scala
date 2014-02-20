@@ -137,4 +137,15 @@ trait LessParsers extends Parsers {
       case Token(Slash, _) => divide
     })
 
+  val factor: Parser[Expr] =
+    typedNumericValue |
+    varRef |
+    token("(", LParen) ~> expr <~ token(")", RParen)
+
+  val term: Parser[Expr] =
+    chainl1(factor, mulOp)
+
+  val expr: Parser[Expr] =
+    chainl1(term, addOp)
+
 }

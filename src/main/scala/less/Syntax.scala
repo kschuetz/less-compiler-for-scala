@@ -2,11 +2,10 @@ package com.kschuetz.less
 
 object syntax {
 
+  sealed abstract trait Expr
 
 
-  sealed abstract trait Factor
-
-  sealed abstract trait VarRef extends Factor {
+  sealed abstract trait VarRef extends Expr {
     def varName: String
   }
 
@@ -114,10 +113,11 @@ object syntax {
   }
 
 
-  sealed abstract trait NumericValue extends Factor
-  sealed abstract trait NumericConstant extends Factor
-  sealed abstract trait NumericLiteral extends Factor
-  sealed abstract trait TypedNumericValue extends Factor
+
+  sealed abstract trait NumericValue
+  sealed abstract trait NumericConstant
+  sealed abstract trait NumericLiteral
+  sealed abstract trait TypedNumericValue extends Expr
 
   case class WholeNumber(value: BigInt) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
   case class RealNumber(value: Double, sourceRepr: String) extends NumericValue with NumericConstant with NumericLiteral with TypedNumericValue
@@ -138,10 +138,15 @@ object syntax {
 
 
 
+  object Expr {
+    def apply(item: Any): Expr =
+      item match {
+        case n: TypedNumericValue => n
+        case r: VarRef => r
+      }
+  }
 
-  sealed abstract trait Expr extends Factor
 
-  sealed abstract trait Term
 
 
 
@@ -153,13 +158,6 @@ object syntax {
   case class Divide(x: Expr, y: Expr) extends Expr
 
 
-  object Factor {
-    def apply(item: Any): Factor =
-      item match {
-        case n: TypedNumericValue => n
-        case r: VarRef => r
-      }
-  }
 
   case class ComponentValue(first: Expr, rest: List[Expr] = Nil)
 
