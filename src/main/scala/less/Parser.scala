@@ -176,9 +176,9 @@ trait LessParsers extends Parsers {
     urlExpression |
     bareIdentifier
 
-  val componentValueList: Parser[ValueGroup] =
+  val componentValueList: Parser[ValueVector] =
     rep(componentValue) ^^ {
-      case xs => ValueGroup(xs)
+      case xs => ValueVector(xs)
     }
 
   val argument: Parser[Argument] =
