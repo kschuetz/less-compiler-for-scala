@@ -26,6 +26,7 @@ trait LessParsers extends Parsers {
   val comma = token(",", Comma)
   val colon = token(":", Colon)
   val equals = token("=", Eq)
+  val bang = token("!", Bang)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -111,7 +112,15 @@ trait LessParsers extends Parsers {
     accept(s"@${name}", {
       case Token(AtIdentifier(s), _) if s == name => name
     })
-  
+
+  def keyword(name: String): Parser[String] =
+    accept(s"${name}", {
+      case Token(Identifier(s), _) if s == name => name
+  })
+
+  val important = bang ~ keyword("important") ^^^ true
+
+
   val atIdent: Parser[String] =
     accept("variable name", {
       case Token(AtIdentifier(name), _) => name
@@ -147,8 +156,6 @@ trait LessParsers extends Parsers {
       case Token(Star, _) => multiply
       case Token(Slash, _) => divide
     })
-
-
 
 
   val factor: Parser[Expr] =
