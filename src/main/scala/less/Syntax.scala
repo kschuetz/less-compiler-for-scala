@@ -161,15 +161,16 @@ object syntax {
   }
 
 
-  case class ComponentValueList(first: ComponentValue, rest: List[ComponentValue] = Nil)
+  case class ValueGroup(values: List[ComponentValue])
 
 
   case class Argument(name: Option[String],
-                      value: Option[ComponentValueList])
+                      value: Option[ValueGroup])
 
   case class FunctionApplication(name: String,
-                                 arguments: Seq[Argument])
+                                 arguments: Seq[Argument]) extends Expr
 
-  case class Arguments(values: Seq[ComponentValue])
+
+  case class VarDeclaration(name: String, value: List[ValueGroup]);
 
 }

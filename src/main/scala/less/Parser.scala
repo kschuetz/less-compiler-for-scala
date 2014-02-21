@@ -24,6 +24,7 @@ trait LessParsers extends Parsers {
   val lParen = token("(", LParen)
   val rParen = token(")", RParen)
   val comma = token(",", Comma)
+  val colon = token(":", Colon)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -54,7 +55,7 @@ trait LessParsers extends Parsers {
 
 
   val urlExpression: Parser[syntax.UrlExpression] =
-    (urlExpressionOpen ~> urlExpressionValue <~ token(")", RParen))
+    (urlExpressionOpen ~> urlExpressionValue <~ rParen)
 
 
   val numericConstant: Parser[syntax.NumericConstant] =
@@ -105,20 +106,25 @@ trait LessParsers extends Parsers {
 
 
 
-  def atIdent(name: String): Parser[String] =
+  def atKeyword(name: String): Parser[String] =
     accept(s"@${name}", {
       case Token(AtIdentifier(s), _) if s == name => name
     })
+  
+  val atIdent: Parser[String] =
+    accept("variable name", {
+      case Token(AtIdentifier(name), _) => name
+    })
 
   val varRef: Parser[syntax.VarRef] =
-    accept(s"variable reference", {
+    accept("variable reference", {
       case Token(AtIdentifier(name), _) => syntax.DirectVarRef(name)
       case Token(AtAtIdentifier(name), _) => syntax.IndirectVarRef(syntax.DirectVarRef(name))
     })
 
 
   val importDirective: Parser[syntax.ImportDirective] =
-    (atIdent("import") ~> stringLiteral <~ semicolon) ^^
+    (atKeyword("import") ~> stringLiteral <~ semicolon) ^^
       { case s => ImportDirective(s) }
 
 
@@ -147,6 +153,7 @@ trait LessParsers extends Parsers {
   val factor: Parser[Expr] =
     typedNumericValue |
     varRef |
+    functionApplication |
     lParen ~> expr <~ rParen
 
   val term: Parser[Expr] =
@@ -169,9 +176,9 @@ trait LessParsers extends Parsers {
     urlExpression |
     bareIdentifier
 
-  val componentValueList: Parser[ComponentValueList] =
-    componentValue ~ rep(componentValue) ^^ {
-      case x ~ xs => ComponentValueList(x, xs)
+  val componentValueList: Parser[ValueGroup] =
+    rep(componentValue) ^^ {
+      case xs => ValueGroup(xs)
     }
 
   val argument: Parser[Argument] =
@@ -195,10 +202,15 @@ trait LessParsers extends Parsers {
     } | moreArguments
   }
 
-  //val argumentList: Parser[Seq[Argument]] =
+  val functionApplication: Parser[FunctionApplication] =
+    ((identifier <~ lParen) ~ (argumentList <~ rParen)) ^^ {
+      case name ~ args => FunctionApplication(name, args)
+    }
 
 
-  //val functionApplication: Parser[FunctionApplication] =
+
+  //val varDeclaration: Parser[VarDeclaration] =
+  //  (atIdent <~ colon) ~ opt(componentValueList)
 
 
 }
