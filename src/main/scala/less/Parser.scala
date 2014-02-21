@@ -25,6 +25,7 @@ trait LessParsers extends Parsers {
   val rParen = token(")", RParen)
   val comma = token(",", Comma)
   val colon = token(":", Colon)
+  val equals = token("=", Eq)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -176,23 +177,35 @@ trait LessParsers extends Parsers {
     urlExpression |
     bareIdentifier
 
-  val componentValueList: Parser[ValueVector] =
+  val valueVector: Parser[ValueVector] =
     rep(componentValue) ^^ {
       case xs => ValueVector(xs)
     }
 
+  val moreValueVectors: Parser[List[ValueVector]] =
+    rep(comma ~> opt(valueVector) ^^ {
+      case Some(v) => v
+      case None => ValueVector.empty
+    })
+
+  val varDeclaration: Parser[VarDeclaration] =
+    (atIdent <~ colon) ~ opt(valueVector) ~ moreValueVectors <~ semicolon ^^ {
+      case name ~ Some(value) ~ moreValues => VarDeclaration(name, value :: moreValues)
+      case name ~ None ~ moreValues => VarDeclaration(name, ValueVector.empty :: moreValues)
+    }
+
   val argument: Parser[Argument] =
-    (identifier ~ token("=", Eq) ~ opt(componentValueList)) ^^ {
-      case ident ~ _ ~ cvl => Argument(Some(ident), cvl)
+    (identifier <~ equals) ~ opt(valueVector) ^^ {
+      case ident ~ cvl => Argument(Some(ident), cvl)
     } |
-    componentValueList ^^ {
+    valueVector ^^ {
       case cvl => Argument(None, Some(cvl))
     }
 
   val moreArguments: Parser[List[Argument]] = {
-    rep(comma ~ opt(argument) ^^ {
-      case _ ~ Some(arg) => arg
-      case _ ~ None => Argument(None, None)
+    rep(comma ~> opt(argument) ^^ {
+      case Some(arg) => arg
+      case None => Argument(None, None)
     })
   }
 

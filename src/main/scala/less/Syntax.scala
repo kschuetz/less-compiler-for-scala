@@ -163,6 +163,10 @@ object syntax {
 
   case class ValueVector(values: List[ComponentValue])
 
+  object ValueVector {
+    val empty = ValueVector(Nil)
+  }
+
 
   case class Argument(name: Option[String],
                       value: Option[ValueVector])
