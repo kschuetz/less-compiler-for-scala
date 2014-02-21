@@ -188,10 +188,15 @@ trait LessParsers extends Parsers {
       case None => ValueVector.empty
     })
 
+  val valueVectorList: Parser[List[ValueVector]] =
+    opt(valueVector) ~ moreValueVectors ^^ {
+      case Some(value) ~ moreValues => value :: moreValues
+      case None ~ moreValues => ValueVector.empty :: moreValues
+    }
+
   val varDeclaration: Parser[VarDeclaration] =
-    (atIdent <~ colon) ~ opt(valueVector) ~ moreValueVectors <~ semicolon ^^ {
-      case name ~ Some(value) ~ moreValues => VarDeclaration(name, value :: moreValues)
-      case name ~ None ~ moreValues => VarDeclaration(name, ValueVector.empty :: moreValues)
+    (atIdent <~ colon) ~ valueVectorList <~ semicolon ^^ {
+      case name ~ values => VarDeclaration(name, values)
     }
 
   val argument: Parser[Argument] =
