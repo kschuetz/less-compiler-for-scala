@@ -127,6 +127,11 @@ trait LessParsers extends Parsers {
       case Token(AtIdentifier(name), _) => name
     })
 
+  val dotIdent: Parser[String] =
+    accept(".identifier", {
+      case Token(DotIdentifier(name), _) => name
+    })
+
   val varRef: Parser[syntax.VarRef] =
     accept("variable reference", {
       case Token(AtIdentifier(name), _) => syntax.DirectVarRef(name)
@@ -233,10 +238,13 @@ trait LessParsers extends Parsers {
       case name ~ args => FunctionApplication(name, args)
     }
 
+  val mixinApplication: Parser[MixinApplication] =
+    dotIdent ~ opt(lParen ~> argumentList <~ rParen) ^^ {
+      case name ~ Some(args) => MixinApplication(name, args)
+      case name ~ None => MixinApplication(name, Nil)
+    }
 
 
-  //val varDeclaration: Parser[VarDeclaration] =
-  //  (atIdent <~ colon) ~ opt(componentValueList)
 
 
 }

@@ -174,6 +174,8 @@ object syntax {
   case class FunctionApplication(name: String,
                                  arguments: Seq[Argument]) extends Expr
 
+  case class MixinApplication(name: String,
+                              arguments: Seq[Argument])
 
   case class VarDeclaration(name: String, value: List[ValueVector]);
 
