@@ -177,4 +177,8 @@ object syntax {
 
   case class VarDeclaration(name: String, value: List[ValueVector]);
 
+
+  sealed abstract trait Priority
+  case object Important extends Priority
+
 }

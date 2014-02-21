@@ -118,7 +118,8 @@ trait LessParsers extends Parsers {
       case Token(Identifier(s), _) if s == name => name
   })
 
-  val important = bang ~ keyword("important") ^^^ true
+  val priority: Parser[syntax.Priority] =
+    bang ~ keyword("important") ^^^ syntax.Important
 
 
   val atIdent: Parser[String] =
