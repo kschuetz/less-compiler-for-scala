@@ -177,18 +177,30 @@ object syntax {
   case class MixinApplication(name: String,
                               arguments: Seq[Argument])
 
-  case class VarDeclaration(name: String, value: List[ValueVector]);
+  case class VarDeclaration(name: String, value: List[ValueVector])
 
 
   sealed abstract trait Priority
   case object Important extends Priority
 
 
+  sealed abstract trait SelectorIdent
+  case class SimpleSelectorIdent(name: String) extends SelectorIdent
+  case class InterpolatedSelectorIdent(chunks: Seq[StringValue]) extends SelectorIdent
+
   sealed abstract trait NamespaceComponent
   case object DefaultNamespace extends NamespaceComponent   // no namespace component supplied
   case object NoNamespace extends NamespaceComponent        // explicitly empty namespace
   case object AnyNamespace extends NamespaceComponent
-  case class Namespace(name: String) extends NamespaceComponent
+  case class Namespace(name: SelectorIdent) extends NamespaceComponent
+
+
+
+  sealed abstract trait SelectorExpr
+  case class SelectorExprIdent(name: String) extends SelectorExpr
+  case class SelectorExprString(value: StringLiteral) extends SelectorExpr
+  case class SelectorExprNumeric1(a: Expr) extends SelectorExpr
+  case class SelectorExprNumeric2(a: Expr, b: Expr ) extends SelectorExpr  // an+b
 
 
   sealed abstract trait AttributeValue
@@ -196,8 +208,14 @@ object syntax {
   case class AttributeIdentValue(name: String) extends AttributeValue
 
   sealed abstract trait Selector
-  case class UniversalSelector(namespace: NamespaceComponent) extends Selector
-  case class TypeSelector(element: String, namespace: NamespaceComponent) extends Selector
+  sealed abstract trait SimpleSelector extends Selector
+  case class UniversalSelector(namespace: NamespaceComponent) extends SimpleSelector
+  case class TypeSelector(element: SelectorIdent, namespace: NamespaceComponent) extends SimpleSelector
+  case class ClassSelector(name: SelectorIdent) extends SimpleSelector
+  case class IDSelector(name: SelectorIdent) extends SimpleSelector
+  case class PseudoElementSelector(name: SelectorIdent) extends SimpleSelector
+  case class PseudoClassSelector(name: SelectorIdent) extends SimpleSelector
+  case class FunctionalPseudoSelector(name: SelectorIdent, expr: SelectorExpr) extends SimpleSelector
 
   sealed abstract trait AttributeMatchOp
   case object AttributeEquals extends AttributeMatchOp
@@ -207,12 +225,19 @@ object syntax {
   case object AttributeDashMatch extends AttributeMatchOp
   case object AttributeSubstringMatch extends AttributeMatchOp
 
-  sealed abstract trait AttributeSelector extends Selector
+  sealed abstract trait AttributeSelector extends SimpleSelector
   case class HasAttribute(attributeName: String) extends AttributeSelector
-  case class AttributeMatch(matchOp: AttributeMatchOp, attributeName: String, value: AttributeValue) extends AttributeSelector
+  case class AttributeMatch(matchOp: AttributeMatchOp, attributeName: String, namespace: NamespaceComponent, value: AttributeValue) extends AttributeSelector
 
-  case class DescendantCombinator(first: Selector, second: Selector) extends Selector
-  case class AdjacentSiblingCombinator(first: Selector, second: Selector) extends Selector
-  case class GeneralSiblingCombinator(first: Selector, second: Selector) extends Selector
+  case class NegationSelector(argument: SimpleSelector) extends SimpleSelector
+
+  case class SimpleSelectorSeq(items: Seq[SimpleSelector]) extends Selector
+
+  sealed abstract trait SelectorCombinator extends Selector
+
+  case class DescendantCombinator(first: SimpleSelectorSeq, second: SimpleSelectorSeq) extends SelectorCombinator
+  case class ChildCombinator(first: SimpleSelectorSeq, second: SimpleSelectorSeq) extends SelectorCombinator
+  case class AdjacentSiblingCombinator(first: SimpleSelectorSeq, second: SimpleSelectorSeq) extends SelectorCombinator
+  case class GeneralSiblingCombinator(first: SimpleSelectorSeq, second: SimpleSelectorSeq) extends SelectorCombinator
 
 }
