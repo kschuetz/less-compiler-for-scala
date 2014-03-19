@@ -183,4 +183,36 @@ object syntax {
   sealed abstract trait Priority
   case object Important extends Priority
 
+
+  sealed abstract trait NamespaceComponent
+  case object DefaultNamespace extends NamespaceComponent   // no namespace component supplied
+  case object NoNamespace extends NamespaceComponent        // explicitly empty namespace
+  case object AnyNamespace extends NamespaceComponent
+  case class Namespace(name: String) extends NamespaceComponent
+
+
+  sealed abstract trait AttributeValue
+  case class AttributeStringValue(value: StringLiteral) extends AttributeValue
+  case class AttributeIdentValue(name: String) extends AttributeValue
+
+  sealed abstract trait Selector
+  case class UniversalSelector(namespace: NamespaceComponent) extends Selector
+  case class TypeSelector(element: String, namespace: NamespaceComponent) extends Selector
+
+  sealed abstract trait AttributeMatchOp
+  case object AttributeEquals extends AttributeMatchOp
+  case object AttributeIncludes extends AttributeMatchOp
+  case object AttributePrefixMatch extends AttributeMatchOp
+  case object AttributeSuffixMatch extends AttributeMatchOp
+  case object AttributeDashMatch extends AttributeMatchOp
+  case object AttributeSubstringMatch extends AttributeMatchOp
+
+  sealed abstract trait AttributeSelector extends Selector
+  case class HasAttribute(attributeName: String) extends AttributeSelector
+  case class AttributeMatch(matchOp: AttributeMatchOp, attributeName: String, value: AttributeValue) extends AttributeSelector
+
+  case class DescendantCombinator(first: Selector, second: Selector) extends Selector
+  case class AdjacentSiblingCombinator(first: Selector, second: Selector) extends Selector
+  case class GeneralSiblingCombinator(first: Selector, second: Selector) extends Selector
+
 }
