@@ -27,6 +27,7 @@ object tokens {
   case object RParen extends TokenValue
   case object LBracket extends TokenValue
   case object RBracket extends TokenValue
+  case object Pipe extends TokenValue       // TODO: add Pipe to lexer
   case object Semicolon extends TokenValue
   case object Comma extends TokenValue
   case object Colon extends TokenValue

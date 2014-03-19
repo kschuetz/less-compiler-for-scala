@@ -184,9 +184,11 @@ object syntax {
   case object Important extends Priority
 
 
-  sealed abstract trait SelectorIdent
+  case class SelectorIdent(chunks: Seq[StringValue])
+  /*
   case class SimpleSelectorIdent(name: String) extends SelectorIdent
   case class InterpolatedSelectorIdent(chunks: Seq[StringValue]) extends SelectorIdent
+  */
 
   sealed abstract trait NamespaceComponent
   case object DefaultNamespace extends NamespaceComponent   // no namespace component supplied
@@ -226,7 +228,7 @@ object syntax {
   case object AttributeSubstringMatch extends AttributeMatchOp
 
   sealed abstract trait AttributeSelector extends SimpleSelector
-  case class HasAttribute(attributeName: String) extends AttributeSelector
+  case class HasAttribute(attributeName: String, namespace: NamespaceComponent) extends AttributeSelector
   case class AttributeMatch(matchOp: AttributeMatchOp, attributeName: String, namespace: NamespaceComponent, value: AttributeValue) extends AttributeSelector
 
   case class NegationSelector(argument: SimpleSelector) extends SimpleSelector

@@ -27,6 +27,10 @@ trait LessParsers extends Parsers {
   val colon = token(":", Colon)
   val equals = token("=", Eq)
   val bang = token("!", Bang)
+  val lBracket = token("[", LBracket)
+  val rBracket = token("]", RBracket)
+  val pipe = token("|", Pipe)
+  val star = token("*", Star)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -244,6 +248,39 @@ trait LessParsers extends Parsers {
       case name ~ None => MixinApplication(name, Nil)
     }
 
+  // selectors
+
+
+  val firstSelectorIdentChunk: Parser[syntax.StringValue] =
+    accept("selector ident chunk", {
+      case Token(AtIdentifier(name), ctx) => syntax.DirectVarRef(name)
+      case Token(Identifier(name), ctx) => StringConstant(name)
+    })
+
+  val anotherSelectorIdentChunk: Parser[syntax.StringValue] =
+    accept("selector ident chunk", {
+      case Token(AtIdentifier(name), ctx) if !ctx.followsWhitespace => syntax.DirectVarRef(name)
+      case Token(Identifier(name), ctx) if !ctx.followsWhitespace => StringConstant(name)
+    })
+
+  val moreSelectorIdentChunks = rep(anotherSelectorIdentChunk)
+
+  val selectorIdent: Parser[SelectorIdent] =
+    firstSelectorIdentChunk ~ moreSelectorIdentChunks ^^ {
+      case x ~ xs => SelectorIdent(x :: xs)
+    }
+
+
+  //val selectorIdent: Parser[SelectorIdent] =
+
+
+  //val namespacePrefix =
+   // star ~ pipe
+
+ // val selectorIdent: Parser[SelectorIdent] =
+
+
+  //val attributeSelector: Parser[AttributeSelector] =
 
 
   //val selectorGroup: Parser[List[Selector]]
