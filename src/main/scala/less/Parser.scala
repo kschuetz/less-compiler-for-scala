@@ -353,7 +353,26 @@ trait LessParsers extends Parsers {
       case (ident, n) ~ Some((op, value)) => AttributeMatch(op, ident, n, value)
     }
 
-  val pseudoSelector = ???
+  /**
+   * Boolean returned indicates extra colon (for pseudo-elements)
+   */
+  val pseudoSelectorPrefix: Parser[(CompositeIdentifier, Boolean)] =
+    colon ~> opt(colonNoWhitespace) ~ CompositeIdentifiers.plainNoWhitespace ^^ {
+      case Some(_) ~ ident => (ident, true)
+      case _ ~ ident => (ident, false)
+    }
+
+  val selectorExpr = ???
+
+  val pseudoSelectorFunction: Parser[SelectorExpr] =
+    lParen ~> selectorExpr <~ rParen ^^ { case expr => expr}
+
+  val pseudoSelector: Parser[SimpleSelector] =
+    pseudoSelectorPrefix ~ opt(pseudoSelectorFunction) ^^ {
+      case (ident, true) ~ None => PseudoElementSelector(ident)
+      case (ident, false) ~ None => PseudoClassSelector(ident)
+      case (ident, _) ~ Some(expr) => FunctionalPseudoSelector(ident, expr)
+    }
 
   val identNOT = caseInsensitiveIdent("not")
 
