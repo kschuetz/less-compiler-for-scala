@@ -37,8 +37,6 @@ trait LessParsers extends Parsers {
   val suffixMatch = token("$=", SuffixMatch)
   val substringMatch = token("*=", SubstringMatch)
 
-  val colonNoWhitespace = token(":", Colon, false)
-
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
     case Token(SingleQuoteLiteral, _) => syntax.SingleQuoteDelimiter
@@ -352,6 +350,8 @@ trait LessParsers extends Parsers {
       case (ident, n) ~ None => HasAttribute(ident, n)
       case (ident, n) ~ Some((op, value)) => AttributeMatch(op, ident, n, value)
     }
+
+  val colonNoWhitespace = token(":", Colon, false)
 
   /**
    * Boolean returned indicates extra colon (for pseudo-elements)
