@@ -343,6 +343,11 @@ trait LessParsers extends Parsers {
       case op ~ value => Some(op, value)
     }
 
+  val attributeSelector: Parser[AttributeSelector] =
+    attributeSelectorLHS ~ attributeSelectorRHS ^^ {
+      case (ident, n) ~ None => HasAttribute(ident, n)
+      case (ident, n) ~ Some((op, value)) => AttributeMatch(op, ident, n, value)
+    }
 
 
   //val attributeSelector: Parser[AttributeSelector] =
