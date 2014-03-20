@@ -129,6 +129,11 @@ trait LessParsers extends Parsers {
       case Token(Identifier(s), _) if s == name => name
   })
 
+  def caseInsensitiveIdent(name: String): Parser[String] =
+    accept(s"${name}", {
+      case Token(Identifier(s), _) if s.equalsIgnoreCase(name) => s
+    })
+
   val priority: Parser[syntax.Priority] =
     bang ~ keyword("important") ^^^ syntax.Important
 
@@ -255,8 +260,6 @@ trait LessParsers extends Parsers {
       case name ~ None => MixinApplication(name, Nil)
     }
 
-  // selectors
-
 
   object CompositeIdentifiers {
 
@@ -297,8 +300,9 @@ trait LessParsers extends Parsers {
 
   }
 
-  val selectorIdent = CompositeIdentifiers.plain
+  // selectors
 
+  val selectorIdent = CompositeIdentifiers.plain
 
   val namespacePrefix: Parser[NamespaceComponent] =
     pipe ^^^ { NoNamespace } |
@@ -306,11 +310,11 @@ trait LessParsers extends Parsers {
     selectorIdent <~ pipe ^^ { case ident => Namespace(ident) }
 
   val typeSelector: Parser[TypeSelector] =
-    namespacePrefix ~ selectorIdent ^^ { case n ~ elem => TypeSelector(elem, n)} |
+    namespacePrefix ~ selectorIdent ^^ { case ns ~ elem => TypeSelector(elem, ns)} |
     selectorIdent ^^ { case elem => TypeSelector(elem, DefaultNamespace) }
 
   val universalSelector: Parser[UniversalSelector] =
-    namespacePrefix <~ star ^^ { case n => UniversalSelector(n) } |
+    namespacePrefix <~ star ^^ { case ns => UniversalSelector(ns) } |
     star ^^^ UniversalSelector(DefaultNamespace)
 
   val classSelector: Parser[ClassSelector] =
@@ -325,7 +329,7 @@ trait LessParsers extends Parsers {
 
   val attributeSelectorLHS: Parser[(CompositeIdentifier, NamespaceComponent)] =
     lBracket ~> opt(namespacePrefix) ~ CompositeIdentifiers.plain ^^ {
-      case Some(n) ~ ident => (ident, n)
+      case Some(ns) ~ ident => (ident, ns)
       case _ ~ ident => (ident, DefaultNamespace)
     }
 
@@ -349,5 +353,19 @@ trait LessParsers extends Parsers {
       case (ident, n) ~ Some((op, value)) => AttributeMatch(op, ident, n, value)
     }
 
+  val pseudoSelector = ???
 
+  val identNOT = caseInsensitiveIdent("not")
+
+  val negationArg: Parser[SimpleSelector] =
+    typeSelector |
+    universalSelector |
+    idSelector |
+    classSelector |
+    pseudoSelector
+
+  val negationSelector =
+    identNOT ~> (lParen ~> negationArg) <~ rParen ^^ {
+      case arg => NegationSelector(arg)
+    }
 }
