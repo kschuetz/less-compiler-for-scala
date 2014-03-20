@@ -316,6 +316,12 @@ trait LessParsers extends Parsers {
     CompositeIdentifiers.plain ^^ { case ident => AttributeIdentValue(ident) } |
     stringLiteral ^^ { case s => AttributeStringValue(s) }
 
+  val attributePrefix: Parser[(CompositeIdentifier, NamespaceComponent)] =
+    lBracket ~> opt(namespacePrefix) ~ CompositeIdentifiers.plain ^^ {
+      case Some(n) ~ ident => (ident, n)
+      case _ ~ ident => (ident, DefaultNamespace)
+    }
+
   //val attributeValue: Parser[AttributeValue] =
 
 
