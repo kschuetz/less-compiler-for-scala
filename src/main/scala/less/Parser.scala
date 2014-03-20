@@ -312,6 +312,9 @@ trait LessParsers extends Parsers {
   val idSelector: Parser[IDSelector] =
     CompositeIdentifiers.hash ^^ { case ident => IDSelector(ident) }
 
+  val attributeValue: Parser[AttributeValue] =
+    CompositeIdentifiers.plain ^^ { case ident => AttributeIdentValue(ident) } |
+    stringLiteral ^^ { case s => AttributeStringValue(s) }
 
   //val attributeValue: Parser[AttributeValue] =
 

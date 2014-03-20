@@ -212,7 +212,7 @@ object syntax {
 
   sealed abstract trait AttributeValue
   case class AttributeStringValue(value: StringLiteral) extends AttributeValue
-  case class AttributeIdentValue(name: String) extends AttributeValue
+  case class AttributeIdentValue(ident: CompositeIdentifier) extends AttributeValue
 
 
   sealed abstract trait Selector
