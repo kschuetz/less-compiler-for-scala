@@ -16,9 +16,8 @@ trait LessParsers extends Parsers {
       s"${value} expected"
     }
 
-  def token(kind: String, value: TokenValue): Parser[Token] =
-    acceptIf(_.value == value){ elem => s"${kind} expected"}
-
+  def token(kind: String, value: TokenValue, allowWhitespace: Boolean = true): Parser[Token] =
+    acceptIf(t => t.value == value && (allowWhitespace || !t.context.followsWhitespace)){ elem => s"${kind} expected"}
 
   val semicolon = token(";", Semicolon)
   val lParen = token("(", LParen)
@@ -38,6 +37,7 @@ trait LessParsers extends Parsers {
   val suffixMatch = token("$=", SuffixMatch)
   val substringMatch = token("*=", SubstringMatch)
 
+  val colonNoWhitespace = token(":", Colon, false)
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -159,9 +159,6 @@ trait LessParsers extends Parsers {
     (atKeyword("import") ~> stringLiteral <~ semicolon) ^^
       { case s => ImportDirective(s) }
 
-
-
-
   val add = syntax.Add.apply _
   val subtract = syntax.Subtract.apply _
   val multiply = syntax.Multiply.apply _
@@ -263,10 +260,10 @@ trait LessParsers extends Parsers {
 
   object CompositeIdentifiers {
 
-    val plainFirstSegment: Parser[syntax.StringValue] =
+    def plainFirstSegment(allowWhitespace: Boolean): Parser[syntax.StringValue] =
       accept("identifier", {
-        case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
-        case Token(Identifier(name), _) => StringConstant(name)
+        case Token(AtBraceIdentifier(name), ctx) if allowWhitespace || !ctx.followsWhitespace => syntax.DirectVarRef(name)
+        case Token(Identifier(name), ctx) if allowWhitespace || !ctx.followsWhitespace => StringConstant(name)
       })
 
     val dotFirstSegment: Parser[syntax.StringValue] =
@@ -290,7 +287,10 @@ trait LessParsers extends Parsers {
     val moreSegments = rep(anotherSegment)
 
     val plain: Parser[CompositeIdentifier] =
-      plainFirstSegment ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+      plainFirstSegment(true) ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+
+    val plainNoWhitespace: Parser[CompositeIdentifier] =
+      plainFirstSegment(false) ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
 
     var dot: Parser[CompositeIdentifier] =
       dotFirstSegment ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
