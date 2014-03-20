@@ -292,50 +292,6 @@ trait LessParsers extends Parsers {
 
   val selectorIdent = CompositeIdent.plain
 
-  /*
-
-  val firstSelectorIdentChunk: Parser[syntax.StringValue] =
-    accept("selector ident chunk", {
-      case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
-      case Token(Identifier(name), _) => StringConstant(name)
-    })
-
-  val firstDotSelectorIdentChunk: Parser[syntax.StringValue] =
-    accept("selector dot ident chunk", {
-      case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
-      case Token(DotIdentifier(name), _) => syntax.StringConstant(name)
-    })
-
-  val firstHashSelectorIdentChunk: Parser[syntax.StringValue] =
-    accept("selector dot ident chunk", {
-      case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
-      case Token(HashIdentifier(name), _) => syntax.StringConstant(name)
-    })
-
-  val anotherSelectorIdentChunk: Parser[syntax.StringValue] =
-    accept("selector ident chunk", {
-      case Token(AtBraceIdentifier(name), ctx) if !ctx.followsWhitespace => syntax.DirectVarRef(name)
-      case Token(Identifier(name), ctx) if !ctx.followsWhitespace => StringConstant(name)
-    })
-
-  val moreSelectorIdentChunks = rep(anotherSelectorIdentChunk)
-
-  val selectorIdent: Parser[CompositeIdentifier] =
-    firstSelectorIdentChunk ~ moreSelectorIdentChunks ^^ {
-      case x ~ xs => CompositeIdentifier(x :: xs)
-    }
-
-  val dotSelectorIdent: Parser[CompositeIdentifier] =
-    firstDotSelectorIdentChunk ~ moreSelectorIdentChunks ^^ {
-      case x ~ xs => CompositeIdentifier(x :: xs)
-    }
-
-  val hashSelectorIdent: Parser[CompositeIdentifier] =
-    firstHashSelectorIdentChunk ~ moreSelectorIdentChunks ^^ {
-      case x ~ xs => CompositeIdentifier(x :: xs)
-    }
-
-    */
 
   val namespacePrefix: Parser[NamespaceComponent] =
     pipe ^^^ { NoNamespace } |
