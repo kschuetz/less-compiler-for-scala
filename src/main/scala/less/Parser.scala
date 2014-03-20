@@ -25,12 +25,19 @@ trait LessParsers extends Parsers {
   val rParen = token(")", RParen)
   val comma = token(",", Comma)
   val colon = token(":", Colon)
-  val equals = token("=", Eq)
   val bang = token("!", Bang)
   val lBracket = token("[", LBracket)
   val rBracket = token("]", RBracket)
   val pipe = token("|", Pipe)
   val star = token("*", Star)
+
+  val equals = token("=", Eq)
+  val includes = token("~=", Includes)
+  val dashMatch = token("|=", DashMatch)
+  val prefixMatch = token("^=", PrefixMatch)
+  val suffixMatch = token("$=", SuffixMatch)
+  val substringMatch = token("*=", SubstringMatch)
+
 
   val stringLiteralOpen: Parser[syntax.QuoteDelimiter] = accept("opening quote", {
     case Token(DoubleQuoteLiteral, _) => syntax.DoubleQuoteDelimiter
@@ -316,11 +323,30 @@ trait LessParsers extends Parsers {
     CompositeIdentifiers.plain ^^ { case ident => AttributeIdentValue(ident) } |
     stringLiteral ^^ { case s => AttributeStringValue(s) }
 
-  val attributePrefix: Parser[(CompositeIdentifier, NamespaceComponent)] =
+  val attributeSelectorLHS: Parser[(CompositeIdentifier, NamespaceComponent)] =
     lBracket ~> opt(namespacePrefix) ~ CompositeIdentifiers.plain ^^ {
       case Some(n) ~ ident => (ident, n)
       case _ ~ ident => (ident, DefaultNamespace)
     }
+
+  val attributeMatchOp: Parser[AttributeMatchOp] =
+    equals ^^^ AttributeEquals |
+    includes ^^^ AttributeIncludes |
+    dashMatch ^^^ AttributeDashMatch |
+    prefixMatch ^^^ AttributePrefixMatch |
+    suffixMatch ^^^ AttributeSuffixMatch |
+    substringMatch ^^^ AttributeSubstringMatch
+
+  val attributeSelectorRHS: Parser[Option[(AttributeMatchOp, AttributeValue)]] =
+    rBracket ^^^ None |
+    attributeMatchOp ~ attributeValue <~ rBracket ^^ {
+      case op ~ value => Some(op, value)
+    }
+
+
+
+  //val attributeSelector: Parser[AttributeSelector] =
+  //  attributePrefix
 
   //val attributeValue: Parser[AttributeValue] =
 
