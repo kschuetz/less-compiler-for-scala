@@ -251,7 +251,48 @@ trait LessParsers extends Parsers {
   // selectors
 
 
+  object CompositeIdent {
 
+    val firstPart: Parser[syntax.StringValue] =
+      accept("selector ident chunk", {
+        case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
+        case Token(Identifier(name), _) => StringConstant(name)
+      })
+
+    val firstDotPart: Parser[syntax.StringValue] =
+      accept("selector dot ident chunk", {
+        case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
+        case Token(DotIdentifier(name), _) => syntax.StringConstant(name)
+      })
+
+    val firstHashPart: Parser[syntax.StringValue] =
+      accept("selector dot ident chunk", {
+        case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
+        case Token(HashIdentifier(name), _) => syntax.StringConstant(name)
+      })
+
+    val anotherPart: Parser[syntax.StringValue] =
+      accept("selector ident chunk", {
+        case Token(AtBraceIdentifier(name), ctx) if !ctx.followsWhitespace => syntax.DirectVarRef(name)
+        case Token(Identifier(name), ctx) if !ctx.followsWhitespace => StringConstant(name)
+      })
+
+    val moreParts = rep(anotherPart)
+
+    val plain: Parser[CompositeIdentifier] =
+      firstPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+
+    var dot: Parser[CompositeIdentifier] =
+      firstDotPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+
+    var hash: Parser[CompositeIdentifier] =
+      firstHashPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+
+  }
+
+  val selectorIdent = CompositeIdent.plain
+
+  /*
 
   val firstSelectorIdentChunk: Parser[syntax.StringValue] =
     accept("selector ident chunk", {
@@ -294,6 +335,8 @@ trait LessParsers extends Parsers {
       case x ~ xs => CompositeIdentifier(x :: xs)
     }
 
+    */
+
   val namespacePrefix: Parser[NamespaceComponent] =
     pipe ^^^ { NoNamespace } |
     star ~ pipe ^^^ { AnyNamespace }  |
@@ -308,10 +351,10 @@ trait LessParsers extends Parsers {
     star ^^^ UniversalSelector(DefaultNamespace)
 
   val classSelector: Parser[ClassSelector] =
-    dotSelectorIdent ^^ { case ident => ClassSelector(ident) }
+    CompositeIdent.dot ^^ { case ident => ClassSelector(ident) }
 
   val idSelector: Parser[IDSelector] =
-    hashSelectorIdent ^^ { case ident => IDSelector(ident) }
+    CompositeIdent.hash ^^ { case ident => IDSelector(ident) }
 
 
   //val attributeValue: Parser[AttributeValue] =
