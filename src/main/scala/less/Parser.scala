@@ -364,8 +364,8 @@ trait LessParsers extends Parsers {
     classSelector |
     pseudoSelector
 
-  val negationSelector =
-    identNOT ~> (lParen ~> negationArg) <~ rParen ^^ {
+  val negationSelector: Parser[NegationSelector] =
+    colon ~> (identNOT ~> (lParen ~> negationArg)) <~ rParen ^^ {
       case arg => NegationSelector(arg)
     }
 }
