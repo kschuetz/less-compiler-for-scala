@@ -251,7 +251,7 @@ trait LessParsers extends Parsers {
   // selectors
 
 
-  object CompositeIdent {
+  object CompositeIdentifiers {
 
     val plainFirstSegment: Parser[syntax.StringValue] =
       accept("identifier", {
@@ -290,7 +290,7 @@ trait LessParsers extends Parsers {
 
   }
 
-  val selectorIdent = CompositeIdent.plain
+  val selectorIdent = CompositeIdentifiers.plain
 
 
   val namespacePrefix: Parser[NamespaceComponent] =
@@ -307,10 +307,10 @@ trait LessParsers extends Parsers {
     star ^^^ UniversalSelector(DefaultNamespace)
 
   val classSelector: Parser[ClassSelector] =
-    CompositeIdent.dot ^^ { case ident => ClassSelector(ident) }
+    CompositeIdentifiers.dot ^^ { case ident => ClassSelector(ident) }
 
   val idSelector: Parser[IDSelector] =
-    CompositeIdent.hash ^^ { case ident => IDSelector(ident) }
+    CompositeIdentifiers.hash ^^ { case ident => IDSelector(ident) }
 
 
   //val attributeValue: Parser[AttributeValue] =
