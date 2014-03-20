@@ -350,29 +350,4 @@ trait LessParsers extends Parsers {
     }
 
 
-  //val attributeSelector: Parser[AttributeSelector] =
-  //  attributePrefix
-
-  //val attributeValue: Parser[AttributeValue] =
-
-
-  //val attributeSelector: Parser[AttributeSelector] =
-  //  lBracket ~ opt(namespacePrefix) ~ selectorIdent
-
-
-  //val selectorIdent: Parser[SelectorIdent] =
-
-
-  //val namespacePrefix =
-   // star ~ pipe
-
- // val selectorIdent: Parser[SelectorIdent] =
-
-
-  //val attributeSelector: Parser[AttributeSelector] =
-
-
-  //val selectorGroup: Parser[List[Selector]]
-
-
 }
