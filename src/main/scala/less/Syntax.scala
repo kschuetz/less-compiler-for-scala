@@ -186,9 +186,9 @@ object syntax {
 
   /**
    * An identifier that is potentially built using interpolated variables
-   * @param parts
+   * @param segments
    */
-  case class CompositeIdentifier(parts: Seq[StringValue])
+  case class CompositeIdentifier(segments: Seq[StringValue])
 
   /*
   case class SimpleSelectorIdent(name: String) extends SelectorIdent

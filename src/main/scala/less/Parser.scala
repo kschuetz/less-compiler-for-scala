@@ -253,40 +253,40 @@ trait LessParsers extends Parsers {
 
   object CompositeIdent {
 
-    val firstPart: Parser[syntax.StringValue] =
-      accept("selector ident chunk", {
+    val plainFirstSegment: Parser[syntax.StringValue] =
+      accept("identifier", {
         case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
         case Token(Identifier(name), _) => StringConstant(name)
       })
 
-    val firstDotPart: Parser[syntax.StringValue] =
-      accept("selector dot ident chunk", {
+    val dotFirstSegment: Parser[syntax.StringValue] =
+      accept("dot identifier", {
         case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
         case Token(DotIdentifier(name), _) => syntax.StringConstant(name)
       })
 
-    val firstHashPart: Parser[syntax.StringValue] =
-      accept("selector dot ident chunk", {
+    val hashFirstSegment: Parser[syntax.StringValue] =
+      accept("hash identifier", {
         case Token(AtBraceIdentifier(name), _) => syntax.DirectVarRef(name)
         case Token(HashIdentifier(name), _) => syntax.StringConstant(name)
       })
 
-    val anotherPart: Parser[syntax.StringValue] =
-      accept("selector ident chunk", {
+    val anotherSegment: Parser[syntax.StringValue] =
+      accept("composite identifier part", {
         case Token(AtBraceIdentifier(name), ctx) if !ctx.followsWhitespace => syntax.DirectVarRef(name)
         case Token(Identifier(name), ctx) if !ctx.followsWhitespace => StringConstant(name)
       })
 
-    val moreParts = rep(anotherPart)
+    val moreSegments = rep(anotherSegment)
 
     val plain: Parser[CompositeIdentifier] =
-      firstPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+      plainFirstSegment ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
 
     var dot: Parser[CompositeIdentifier] =
-      firstDotPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+      dotFirstSegment ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
 
     var hash: Parser[CompositeIdentifier] =
-      firstHashPart ~ moreParts ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
+      hashFirstSegment ~ moreSegments ^^ { case x ~ xs => CompositeIdentifier(x :: xs) }
 
   }
 
